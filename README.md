@@ -30,7 +30,7 @@ Ejecución
 Para ejecutar la aplicación localmente (si `app.py` está pensado para correr como entrypoint):
 
 ```powershell
-python app.py
+streamlit run app.py
 ```
 
 Si la aplicación usa un framework (por ejemplo FastAPI/Flask) revisa `app.py` para ver comandos específicos.
