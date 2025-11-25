@@ -25,7 +25,7 @@ class Factura:
     # Métodos de gestión de la factura
     # ------------------------------
 
-    def alcular_total(self, servicios: List[dict], descuentos: float = 0.0, impuestos: float = 0.0):
+    def calcular_total(self, servicios: List[dict], descuentos: float = 0.0, impuestos: float = 0.0):
         """
         Calcula el total de la factura.
         Parámetros:

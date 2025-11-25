@@ -1,0 +1,51 @@
+Carpeta pages
+    Implementar bien, y de manera bonita todas las paginas. Idealmente tener una pagina de inicio donde un usuario se pueda identificar como dueño o empleado. Si es empleado, ingresar sus credenciales y tiene acceso a todo, si es dueño solo tiene acceso a citas para registrar una nueva cita. O algo por el estilo.
+
+Carpeta src
+    Carpeta database_conn
+        db_conn.py:
+            Cambiar la funcion ExcecuteQuery por queries especificas
+            Probabr connexion con base de datos
+
+    Carpeta entidades
+        Carpeta administrativo
+            cita.py:
+                Nada, por ahora
+            consulta.py:
+                importar factura y cita
+            factura.py:
+                importar consulta
+                desarollar placeholders (generar pdf y madnar email)
+        Carpeta mascotas
+            mascotas.py:
+                Relacionar consultas con mascotas
+        Carpeta personas
+            persona.py:
+                nada por ahora
+            Carepta duenos
+                dueno.py:
+                    Cambiar funciones a acceptar listas de OBJETOS mascota, no diccionarios.
+            Carpeta empleados
+                conserje.py:
+                    Por ahora nada
+                empleado.py:
+                    Nada por ahora
+                enfermero.py:
+                    Nada por ahora
+                recepcionista.py
+                    Nada por ahora
+                veterinario.py
+                    Nada por ahora
+
+    Carpeta excepciones:
+        No se porque la creamos, en verdad se puede quitar
+    
+    Carpeta logging:
+        Implementar absolutamente todo lo de logging en todos los archivos
+
+Carpeta tests:
+    Implementar todos los posibles tests utilizando unittest
+
+
+Cosas generales:
+    Implementar la base de datos SQL a los .py de entidades
