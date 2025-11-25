@@ -1,5 +1,8 @@
 from abc import ABC, abstractmethod
 from datetime import date, datetime
+import logging
+
+logger = logging.getLogger('entidades.persona')
 
 
 class Persona(ABC):

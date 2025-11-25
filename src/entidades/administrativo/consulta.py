@@ -1,5 +1,12 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
+import logging
+
+if TYPE_CHECKING:
+    from src.entidades.administrativo.factura import Factura
+    from src.entidades.administrativo.cita import Cita
+
+logger = logging.getLogger('entidades.consulta')
 
 
 class Consulta:
@@ -34,8 +41,10 @@ class Consulta:
     def registrar_diagnostico(self, diagnostico: str):
         """Registra o actualiza el diagnóstico médico."""
         if not diagnostico.strip():
+            logger.error(f"Intento de registrar diagnóstico vacío en Consulta {self.id_consulta}")
             raise ValueError("El diagnóstico no puede estar vacío.")
         self.diagnostico = diagnostico
+        logger.info(f"Diagnóstico registrado en Consulta {self.id_consulta}")
 
     def mostrar_detalle(self) -> str:
         """Muestra la información completa de la consulta."""
@@ -65,8 +74,64 @@ class Consulta:
     def vincular_factura(self, id_factura: int):
         """Asocia la consulta con una factura."""
         if self.id_factura is not None:
+            logger.warning(f"Intento de vincular factura {id_factura} a Consulta {self.id_consulta} que ya tiene factura {self.id_factura}")
             raise ValueError("Esta consulta ya está vinculada a una factura.")
         self.id_factura = id_factura
+        logger.info(f"Factura {id_factura} vinculada a Consulta {self.id_consulta}")
+
+    # ------------------------------
+    # Métodos de persistencia SQL
+    # ------------------------------
+
+    def save(self, db):
+        """Guarda la consulta en la base de datos."""
+        try:
+            db.insertar_consulta(self.id_consulta, self.id_cita, self.id_veterinario,
+                               self.diagnostico, self.tratamiento, self.observaciones)
+            logger.info(f"Consulta {self.id_consulta} guardada en base de datos")
+        except Exception as e:
+            logger.error(f"Error al guardar Consulta {self.id_consulta}: {e}")
+            raise
+
+    def update(self, db):
+        """Actualiza la consulta en la base de datos."""
+        try:
+            db.actualizar_consulta(self.id_consulta, self.diagnostico, 
+                                 self.tratamiento, self.observaciones)
+            logger.info(f"Consulta {self.id_consulta} actualizada en base de datos")
+        except Exception as e:
+            logger.error(f"Error al actualizar Consulta {self.id_consulta}: {e}")
+            raise
+
+    def delete(self, db):
+        """Elimina la consulta de la base de datos."""
+        try:
+            db.eliminar_consulta(self.id_consulta)
+            logger.info(f"Consulta {self.id_consulta} eliminada de base de datos")
+        except Exception as e:
+            logger.error(f"Error al eliminar Consulta {self.id_consulta}: {e}")
+            raise
+
+    @staticmethod
+    def load(db, id_consulta: int):
+        """Carga una consulta desde la base de datos."""
+        try:
+            consulta_data = db.obtener_consulta_por_id(id_consulta)
+            if consulta_data:
+                logger.info(f"Consulta {id_consulta} cargada desde base de datos")
+                return Consulta(
+                    id_consulta=consulta_data['id_consulta'],
+                    id_cita=consulta_data['id_cita'],
+                    id_veterinario=consulta_data['id_veterinario'],
+                    diagnostico=consulta_data['diagnostico'],
+                    tratamiento=consulta_data['tratamiento'],
+                    observaciones=consulta_data['observaciones']
+                )
+            logger.warning(f"Consulta {id_consulta} no encontrada en base de datos")
+            return None
+        except Exception as e:
+            logger.error(f"Error al cargar Consulta {id_consulta}: {e}")
+            raise
 
     # ------------------------------
     # Representación legible

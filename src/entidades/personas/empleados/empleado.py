@@ -2,7 +2,10 @@
 from abc import ABC, abstractmethod
 from datetime import datetime, date
 from typing import List, Optional, Tuple
+import logging
 from src.entidades.personas.persona import Persona
+
+logger = logging.getLogger('entidades.empleado')
 
 
 class Empleado(Persona, ABC):
@@ -60,8 +63,11 @@ class Empleado(Persona, ABC):
     def actualizar_salario(self, nuevo_salario: float):
         """Actualiza el salario del empleado (valida que sea positivo)."""
         if nuevo_salario <= 0:
+            logger.error(f"Intento de asignar salario inválido ({nuevo_salario}) a empleado {self.id_empleado}")
             raise ValueError("El salario debe ser un número positivo.")
+        salario_anterior = self.salario
         self.salario = nuevo_salario
+        logger.info(f"Salario de empleado {self.id_empleado} actualizado de {salario_anterior} a {nuevo_salario}")
 
     def establecer_credenciales(self, usuario: str, contraseña: str):
         """Asigna credenciales de acceso al empleado."""
@@ -110,3 +116,130 @@ class Empleado(Persona, ABC):
             self.email = email
         if telefono:
             self.telefono = telefono
+
+    # ------------------------------
+    # Métodos de persistencia SQL
+    # ------------------------------
+
+    def save(self, db):
+        """Guarda el empleado en la base de datos."""
+        try:
+            fecha_nac_str = self.fecha_nacimiento.strftime('%Y-%m-%d')
+            db.insertar_empleado(self.id_empleado, self.nombre, self.dni, self.telefono,
+                               self.email, fecha_nac_str, self.salario, self.tipo_empleado,
+                               self._credenciales.get('usuario'), 
+                               self._credenciales.get('contraseña'))
+            logger.info(f"Empleado {self.nombre} (ID: {self.id_empleado}) guardado en base de datos")
+        except Exception as e:
+            logger.error(f"Error al guardar Empleado {self.id_empleado}: {e}")
+            raise
+
+    def update(self, db):
+        """Actualiza el empleado en la base de datos."""
+        try:
+            fecha_nac_str = self.fecha_nacimiento.strftime('%Y-%m-%d')
+            db.actualizar_empleado(self.id_empleado, self.nombre, self.dni, self.telefono,
+                                 self.email, fecha_nac_str, self.salario, self.tipo_empleado,
+                                 self._credenciales.get('usuario'),
+                                 self._credenciales.get('contraseña'))
+            logger.info(f"Empleado {self.nombre} (ID: {self.id_empleado}) actualizado en base de datos")
+        except Exception as e:
+            logger.error(f"Error al actualizar Empleado {self.id_empleado}: {e}")
+            raise
+
+    def delete(self, db):
+        """Elimina el empleado de la base de datos."""
+        try:
+            db.eliminar_empleado(self.id_empleado)
+            logger.info(f"Empleado {self.nombre} (ID: {self.id_empleado}) eliminado de base de datos")
+        except Exception as e:
+            logger.error(f"Error al eliminar Empleado {self.id_empleado}: {e}")
+            raise
+
+    @staticmethod
+    def load(db, id_empleado: int):
+        """Carga un empleado desde la base de datos."""
+        try:
+            empleado_data = db.obtener_empleado_por_id(id_empleado)
+            if empleado_data:
+                logger.info(f"Empleado {id_empleado} cargado desde base de datos")
+                # Crear instancia según el tipo de empleado
+                from src.entidades.personas.empleados.veterinario import Veterinario
+                from src.entidades.personas.empleados.recepcionista import Recepcionista
+                from src.entidades.personas.empleados.enfermero import Enfermero
+                from src.entidades.personas.empleados.conserje import Conserje
+                
+                tipo = empleado_data['tipo_empleado']
+                if tipo == 'Veterinario':
+                    empleado = Veterinario(
+                        id_empleado=empleado_data['id_empleado'],
+                        nombre=empleado_data['nombre'],
+                        dni=empleado_data['dni'],
+                        telefono=empleado_data['telefono'],
+                        email=empleado_data['email'],
+                        fecha_nacimiento=empleado_data['fecha_nacimiento'].strftime('%Y-%m-%d'),
+                        salario=empleado_data['salario'],
+                        especialidad=empleado_data.get('especialidad', ''),
+                        num_colegiado=empleado_data.get('num_colegiado', ''),
+                        horario=empleado_data.get('horario', '')
+                    )
+                elif tipo == 'Recepcionista':
+                    empleado = Recepcionista(
+                        id_empleado=empleado_data['id_empleado'],
+                        nombre=empleado_data['nombre'],
+                        dni=empleado_data['dni'],
+                        telefono=empleado_data['telefono'],
+                        email=empleado_data['email'],
+                        fecha_nacimiento=empleado_data['fecha_nacimiento'].strftime('%Y-%m-%d'),
+                        salario=empleado_data['salario'],
+                        horario=empleado_data.get('horario', '')
+                    )
+                elif tipo == 'Enfermero':
+                    empleado = Enfermero(
+                        id_empleado=empleado_data['id_empleado'],
+                        nombre=empleado_data['nombre'],
+                        dni=empleado_data['dni'],
+                        telefono=empleado_data['telefono'],
+                        email=empleado_data['email'],
+                        fecha_nacimiento=empleado_data['fecha_nacimiento'].strftime('%Y-%m-%d'),
+                        salario=empleado_data['salario'],
+                        turno=empleado_data.get('turno', ''),
+                        area_asignada=empleado_data.get('area_asignada', '')
+                    )
+                elif tipo == 'Conserje':
+                    empleado = Conserje(
+                        id_empleado=empleado_data['id_empleado'],
+                        nombre=empleado_data['nombre'],
+                        dni=empleado_data['dni'],
+                        telefono=empleado_data['telefono'],
+                        email=empleado_data['email'],
+                        fecha_nacimiento=empleado_data['fecha_nacimiento'].strftime('%Y-%m-%d'),
+                        salario=empleado_data['salario'],
+                        turno=empleado_data.get('turno', '')
+                    )
+                else:
+                    # Por defecto crear Empleado genérico (aunque no debería ocurrir)
+                    empleado = Empleado(
+                        id_empleado=empleado_data['id_empleado'],
+                        nombre=empleado_data['nombre'],
+                        dni=empleado_data['dni'],
+                        telefono=empleado_data['telefono'],
+                        email=empleado_data['email'],
+                        fecha_nacimiento=empleado_data['fecha_nacimiento'].strftime('%Y-%m-%d'),
+                        salario=empleado_data['salario'],
+                        tipo_empleado=tipo
+                    )
+                
+                # Establecer credenciales si existen
+                if empleado_data.get('usuario') and empleado_data.get('contraseña'):
+                    empleado.establecer_credenciales(
+                        empleado_data['usuario'],
+                        empleado_data['contraseña']
+                    )
+                
+                return empleado
+            logger.warning(f"Empleado {id_empleado} no encontrado en base de datos")
+            return None
+        except Exception as e:
+            logger.error(f"Error al cargar Empleado {id_empleado}: {e}")
+            raise

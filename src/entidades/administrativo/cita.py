@@ -1,4 +1,7 @@
 from datetime import datetime, timedelta
+import logging
+
+logger = logging.getLogger('entidades.cita')
 
 
 class Cita:
@@ -34,22 +37,30 @@ class Cita:
     def reprogramar(self, nueva_fecha: str, nueva_hora: str):
         """Cambia la fecha y hora de la cita (solo si está pendiente)."""
         if self.estado != "pendiente":
+            logger.error(f"Intento de reprogramar cita {self.id_cita} con estado '{self.estado}'")
             raise ValueError("Solo se pueden reprogramar citas pendientes.")
+        fecha_anterior = f"{self.fecha} {self.hora.strftime('%H:%M')}"
         self.fecha = datetime.strptime(nueva_fecha, "%Y-%m-%d").date()
         self.hora = datetime.strptime(nueva_hora, "%H:%M").time()
+        logger.info(f"Cita {self.id_cita} reprogramada de {fecha_anterior} a {nueva_fecha} {nueva_hora}")
 
     def cancelar(self):
         """Marca la cita como cancelada."""
         if self.estado == "completada":
+            logger.error(f"Intento de cancelar cita {self.id_cita} ya completada")
             raise ValueError("No se puede cancelar una cita completada.")
         self.estado = "cancelada"
+        logger.info(f"Cita {self.id_cita} cancelada (Fecha: {self.fecha}, Motivo: {self.motivo})")
 
     def marcar_como_completada(self, hora_fin: str):
         """Marca la cita como completada y registra la hora de finalización."""
         if self.estado == "cancelada":
+            logger.error(f"Intento de completar cita {self.id_cita} que fue cancelada")
             raise ValueError("No se puede completar una cita cancelada.")
         self.estado = "completada"
         self._hora_fin = datetime.strptime(hora_fin, "%H:%M").time()
+        duracion = datetime.combine(self.fecha, self._hora_fin) - datetime.combine(self.fecha, self.hora)
+        logger.info(f"Cita {self.id_cita} completada - Duración: {duracion}")
 
     def obtener_duracion(self) -> timedelta:
         """Devuelve la duración estimada de la cita si tiene hora de fin registrada."""
@@ -72,6 +83,65 @@ class Cita:
         if self._hora_fin:
             resumen += f"\nDuración: {self.obtener_duracion()}"
         return resumen
+
+    # ------------------------------
+    # Métodos de persistencia SQL
+    # ------------------------------
+
+    def save(self, db):
+        """Guarda la cita en la base de datos usando db_conn."""
+        try:
+            fecha_str = self.fecha.strftime('%Y-%m-%d')
+            hora_str = self.hora.strftime('%H:%M')
+            db.insertar_cita(self.id_cita, fecha_str, hora_str, self.motivo, 
+                           self.id_mascota, self.id_empleado, self.estado)
+            logger.info(f"Cita {self.id_cita} guardada en base de datos")
+        except Exception as e:
+            logger.error(f"Error al guardar Cita {self.id_cita}: {e}")
+            raise
+
+    def update(self, db):
+        """Actualiza la cita en la base de datos."""
+        try:
+            fecha_str = self.fecha.strftime('%Y-%m-%d')
+            hora_str = self.hora.strftime('%H:%M')
+            db.actualizar_cita(self.id_cita, fecha_str, hora_str, self.motivo, 
+                             self.id_mascota, self.id_empleado, self.estado)
+            logger.info(f"Cita {self.id_cita} actualizada en base de datos")
+        except Exception as e:
+            logger.error(f"Error al actualizar Cita {self.id_cita}: {e}")
+            raise
+
+    def delete(self, db):
+        """Elimina la cita de la base de datos."""
+        try:
+            db.eliminar_cita(self.id_cita)
+            logger.info(f"Cita {self.id_cita} eliminada de base de datos")
+        except Exception as e:
+            logger.error(f"Error al eliminar Cita {self.id_cita}: {e}")
+            raise
+
+    @staticmethod
+    def load(db, id_cita: int):
+        """Carga una cita desde la base de datos."""
+        try:
+            cita_data = db.obtener_cita_por_id(id_cita)
+            if cita_data:
+                logger.info(f"Cita {id_cita} cargada desde base de datos")
+                return Cita(
+                    id_cita=cita_data['id_cita'],
+                    fecha=cita_data['fecha'].strftime('%Y-%m-%d'),
+                    hora=cita_data['hora'].strftime('%H:%M'),
+                    motivo=cita_data['motivo'],
+                    id_mascota=cita_data['id_mascota'],
+                    id_empleado=cita_data['id_empleado'],
+                    estado=cita_data['estado']
+                )
+            logger.warning(f"Cita {id_cita} no encontrada en base de datos")
+            return None
+        except Exception as e:
+            logger.error(f"Error al cargar Cita {id_cita}: {e}")
+            raise
 
     # ------------------------------
     # Representación de texto
