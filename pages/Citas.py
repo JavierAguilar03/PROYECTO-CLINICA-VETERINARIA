@@ -119,7 +119,7 @@ with tab2:
                 if db.connect():
                     if st.session_state.user_type == "dueño":
                         # Solo mascotas del dueño
-                        mascotas = db.obtener_mascotas_por_dueno(st.session_state.user_data['id_dueño'])
+                        mascotas = db.obtener_mascotas_por_dueno(st.session_state.user_data['id_dueno'])
                     else:
                         # Todas las mascotas para empleados
                         mascotas = db.fetch_all("SELECT * FROM mascotas")

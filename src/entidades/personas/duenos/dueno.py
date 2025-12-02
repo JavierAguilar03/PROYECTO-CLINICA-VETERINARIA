@@ -10,7 +10,7 @@ from src.entidades.personas.persona import Persona
 logger = logging.getLogger('entidades.dueno')
 
 
-class Dueño(Persona):
+class Dueno(Persona):
     """
     Clase Dueño
     Propósito: Representar al cliente que posee una o más mascotas.
@@ -19,10 +19,10 @@ class Dueño(Persona):
     - SRP: Solo gestiona datos y relaciones del dueño.
     """
 
-    def __init__(self, id_dueño: int, nombre: str, dni: str, telefono: str, email: str,
+    def __init__(self, id_dueno: int, nombre: str, dni: str, telefono: str, email: str,
                  fecha_nacimiento: str, direccion: str):
         super().__init__(nombre, dni, telefono, email, fecha_nacimiento)
-        self.id_dueño = id_dueño
+        self.id_dueno = id_dueno
         self.direccion = direccion
         self.mascotas: List['Mascota'] = []
 
@@ -34,9 +34,9 @@ class Dueño(Persona):
         """Agrega una nueva mascota a la lista del dueño."""
         if mascota not in self.mascotas:
             self.mascotas.append(mascota)
-            logger.info(f"Mascota {mascota.nombre} (ID: {mascota.id_mascota}) agregada a dueño {self.nombre} (ID: {self.id_dueño})")
+            logger.info(f"Mascota {mascota.nombre} (ID: {mascota.id_mascota}) agregada a dueño {self.nombre} (ID: {self.id_dueno})")
         else:
-            logger.warning(f"Mascota {mascota.id_mascota} ya está asociada al dueño {self.id_dueño}")
+            logger.warning(f"Mascota {mascota.id_mascota} ya está asociada al dueño {self.id_dueno}")
 
     def obtener_mascotas(self) -> List['Mascota']:
         """Devuelve la lista de mascotas asociadas al dueño."""
@@ -47,15 +47,15 @@ class Dueño(Persona):
         cantidad_antes = len(self.mascotas)
         self.mascotas = [m for m in self.mascotas if m.id_mascota != id_mascota]
         if len(self.mascotas) < cantidad_antes:
-            logger.info(f"Mascota ID {id_mascota} eliminada de dueño {self.nombre} (ID: {self.id_dueño})")
+            logger.info(f"Mascota ID {id_mascota} eliminada de dueño {self.nombre} (ID: {self.id_dueno})")
         else:
-            logger.warning(f"Mascota ID {id_mascota} no encontrada en lista de dueño {self.id_dueño}")
+            logger.warning(f"Mascota ID {id_mascota} no encontrada en lista de dueño {self.id_dueno}")
 
     def actualizar_direccion(self, nueva_direccion: str):
         """Actualiza la dirección del dueño."""
         direccion_anterior = self.direccion
         self.direccion = nueva_direccion
-        logger.info(f"Dirección de dueño {self.nombre} (ID: {self.id_dueño}) actualizada: '{direccion_anterior}' -> '{nueva_direccion}'")
+        logger.info(f"Dirección de dueño {self.nombre} (ID: {self.id_dueno}) actualizada: '{direccion_anterior}' -> '{nueva_direccion}'")
 
     def buscar_mascota_por_nombre(self, nombre: str) -> List['Mascota']:
         """Busca mascotas que coincidan (total o parcialmente) con el nombre indicado."""
@@ -75,7 +75,7 @@ class Dueño(Persona):
     def mostrar_info(self) -> str:
         """Devuelve un resumen de los datos personales y sus mascotas."""
         info = (
-            f"Dueño: {self.nombre} (ID: {self.id_dueño})\n"
+            f"Dueño: {self.nombre} (ID: {self.id_dueno})\n"
             f"DNI: {self.dni}\n"
             f"Teléfono: {self.telefono}\n"
             f"Email: {self.email}\n"
@@ -110,31 +110,31 @@ class Dueño(Persona):
         """Guarda el dueño en la base de datos."""
         try:
             fecha_nac_str = self.fecha_nacimiento.strftime('%Y-%m-%d')
-            db.insertar_dueno(self.id_dueño, self.nombre, self.dni, self.telefono,
+            db.insertar_dueno(self.id_dueno, self.nombre, self.dni, self.telefono,
                             self.email, fecha_nac_str, self.direccion)
-            logger.info(f"Dueño {self.nombre} (ID: {self.id_dueño}) guardado en base de datos")
+            logger.info(f"Dueño {self.nombre} (ID: {self.id_dueno}) guardado en base de datos")
         except Exception as e:
-            logger.error(f"Error al guardar Dueño {self.id_dueño}: {e}")
+            logger.error(f"Error al guardar Dueño {self.id_dueno}: {e}")
             raise
 
     def update(self, db):
         """Actualiza el dueño en la base de datos."""
         try:
             fecha_nac_str = self.fecha_nacimiento.strftime('%Y-%m-%d')
-            db.actualizar_dueno(self.id_dueño, self.nombre, self.dni, self.telefono,
+            db.actualizar_dueno(self.id_dueno, self.nombre, self.dni, self.telefono,
                               self.email, fecha_nac_str, self.direccion)
-            logger.info(f"Dueño {self.nombre} (ID: {self.id_dueño}) actualizado en base de datos")
+            logger.info(f"Dueño {self.nombre} (ID: {self.id_dueno}) actualizado en base de datos")
         except Exception as e:
-            logger.error(f"Error al actualizar Dueño {self.id_dueño}: {e}")
+            logger.error(f"Error al actualizar Dueño {self.id_dueno}: {e}")
             raise
 
     def delete(self, db):
         """Elimina el dueño de la base de datos."""
         try:
-            db.eliminar_dueno(self.id_dueño)
-            logger.info(f"Dueño {self.nombre} (ID: {self.id_dueño}) eliminado de base de datos")
+            db.eliminar_dueno(self.id_dueno)
+            logger.info(f"Dueño {self.nombre} (ID: {self.id_dueno}) eliminado de base de datos")
         except Exception as e:
-            logger.error(f"Error al eliminar Dueño {self.id_dueño}: {e}")
+            logger.error(f"Error al eliminar Dueño {self.id_dueno}: {e}")
             raise
 
     @staticmethod
@@ -144,8 +144,8 @@ class Dueño(Persona):
             dueno_data = db.obtener_dueno_por_id(id_dueno)
             if dueno_data:
                 logger.info(f"Dueño {id_dueno} cargado desde base de datos")
-                return Dueño(
-                    id_dueño=dueno_data['id_dueno'],
+                return Dueno(
+                    id_dueno=dueno_data['id_dueno'],
                     nombre=dueno_data['nombre'],
                     dni=dueno_data['dni'],
                     telefono=dueno_data['telefono'],
