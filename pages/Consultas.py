@@ -77,23 +77,23 @@ with tab2:
         st.warning("⚠️ Solo veterinarios pueden registrar consultas médicas.")
     else:
         with st.form("nueva_consulta"):
-        id_cita = st.number_input("ID de la Cita*", min_value=1, step=1)
-        diagnostico = st.text_area("Diagnóstico*", height=100)
-        tratamiento = st.text_area("Tratamiento*", height=100)
-        observaciones = st.text_area("Observaciones", height=80)
-        
-        if st.form_submit_button("🏥 Registrar Consulta", use_container_width=True):
-            if id_cita and diagnostico and tratamiento:
-                try:
-                    db = init_db()
-                    if db.connect():
-                        id_consulta = db.insertar_consulta(id_cita, diagnostico, tratamiento, observaciones)
-                        db.disconnect()
-                        if id_consulta:
-                            st.success(f"✅ Consulta registrada (ID: {id_consulta})")
-                        else:
-                            st.error("Error al registrar")
-                except Exception as e:
-                    st.error(f"Error: {str(e)}")
-            else:
-                st.warning("⚠️ Complete los campos obligatorios")
+            id_cita = st.number_input("ID de la Cita*", min_value=1, step=1)
+            diagnostico = st.text_area("Diagnóstico*", height=100)
+            tratamiento = st.text_area("Tratamiento*", height=100)
+            observaciones = st.text_area("Observaciones", height=80)
+            
+            if st.form_submit_button("🏥 Registrar Consulta", use_container_width=True):
+                if id_cita and diagnostico and tratamiento:
+                    try:
+                        db = init_db()
+                        if db.connect():
+                            id_consulta = db.insertar_consulta(id_cita, diagnostico, tratamiento, observaciones)
+                            db.disconnect()
+                            if id_consulta:
+                                st.success(f"✅ Consulta registrada (ID: {id_consulta})")
+                            else:
+                                st.error("Error al registrar")
+                    except Exception as e:
+                        st.error(f"Error: {str(e)}")
+                else:
+                    st.warning("⚠️ Complete los campos obligatorios")

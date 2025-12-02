@@ -85,36 +85,36 @@ with tab2:
         st.warning("⚠️ Solo dueños y recepcionistas pueden registrar nuevas mascotas.")
     else:
         with st.form("nueva_mascota"):
-        col1, col2 = st.columns(2)
-        with col1:
-            nombre = st.text_input("Nombre*")
-            especie = st.text_input("Especie*")
-            raza = st.text_input("Raza*")
-        with col2:
-            peso = st.number_input("Peso (kg)*", min_value=0.1, step=0.1)
-            sexo = st.selectbox("Sexo*", ["Macho", "Hembra"])
-            fecha_nac = st.date_input("Fecha de nacimiento*")
-        
-        # Si es dueño, usar su propio ID
-        if user_role == 'dueño':
-            id_dueno = st.session_state.user_data['id_dueno']
-            st.info(f"Registrando mascota para: {st.session_state.user_data.get('nombre', 'Usuario')}")
-        else:
-            id_dueno = st.number_input("ID del Dueño*", min_value=1, step=1)
-        
-        if st.form_submit_button("🐾 Registrar Mascota", use_container_width=True):
-            if nombre and especie and raza and peso and id_dueno:
-                try:
-                    db = init_db()
-                    if db.connect():
-                        fecha_str = fecha_nac.strftime("%Y-%m-%d")
-                        id_mascota = db.insertar_mascota(nombre, especie, raza, fecha_str, peso, sexo, id_dueno)
-                        db.disconnect()
-                        if id_mascota:
-                            st.success(f"✅ Mascota registrada (ID: {id_mascota})")
-                        else:
-                            st.error("Error al registrar")
-                except Exception as e:
-                    st.error(f"Error: {str(e)}")
+            col1, col2 = st.columns(2)
+            with col1:
+                nombre = st.text_input("Nombre*")
+                especie = st.text_input("Especie*")
+                raza = st.text_input("Raza*")
+            with col2:
+                peso = st.number_input("Peso (kg)*", min_value=0.1, step=0.1)
+                sexo = st.selectbox("Sexo*", ["Macho", "Hembra"])
+                fecha_nac = st.date_input("Fecha de nacimiento*")
+            
+            # Si es dueño, usar su propio ID
+            if user_role == 'dueño':
+                id_dueno = st.session_state.user_data['id_dueno']
+                st.info(f"Registrando mascota para: {st.session_state.user_data.get('nombre', 'Usuario')}")
             else:
-                st.warning("⚠️ Complete todos los campos")
+                id_dueno = st.number_input("ID del Dueño*", min_value=1, step=1)
+            
+            if st.form_submit_button("🐾 Registrar Mascota", use_container_width=True):
+                if nombre and especie and raza and peso and id_dueno:
+                    try:
+                        db = init_db()
+                        if db.connect():
+                            fecha_str = fecha_nac.strftime("%Y-%m-%d")
+                            id_mascota = db.insertar_mascota(nombre, especie, raza, fecha_str, peso, sexo, id_dueno)
+                            db.disconnect()
+                            if id_mascota:
+                                st.success(f"✅ Mascota registrada (ID: {id_mascota})")
+                            else:
+                                st.error("Error al registrar")
+                    except Exception as e:
+                        st.error(f"Error: {str(e)}")
+                else:
+                    st.warning("⚠️ Complete todos los campos")
