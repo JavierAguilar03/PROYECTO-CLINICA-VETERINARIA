@@ -3,7 +3,7 @@ from typing import List, Optional, TYPE_CHECKING
 import logging
 
 if TYPE_CHECKING:
-    from src.entidades.personas.duenos.dueno import Dueño
+    from src.entidades.personas.duenos.dueno import Dueno
     from src.entidades.administrativo.consulta import Consulta
 
 logger = logging.getLogger('entidades.mascota')
@@ -19,7 +19,7 @@ class Mascota:
     """
 
     def __init__(self, id_mascota: int, nombre: str, especie: str, raza: str,
-                 fecha_nacimiento: str, peso: float, sexo: str, dueño: 'Dueño'):
+                 fecha_nacimiento: str, peso: float, sexo: str, dueno: 'Dueno'):
         self.id_mascota = id_mascota
         self.nombre = nombre
         self.especie = especie
@@ -28,7 +28,7 @@ class Mascota:
         self.fecha_nacimiento = datetime.strptime(fecha_nacimiento, "%Y-%m-%d").date()
         self.peso = peso
         self.sexo = sexo
-        self.dueño = dueño
+        self.dueno = dueno
         self.historial_consultas: List[int] = []  # lista de IDs de consultas
         self._consultas_cache: List['Consulta'] = []  # cache opcional para objetos Consulta
 
@@ -98,7 +98,7 @@ class Mascota:
         try:
             fecha_nac_str = self.fecha_nacimiento.strftime('%Y-%m-%d')
             db.insertar_mascota(self.id_mascota, self.nombre, self.especie, self.raza,
-                              fecha_nac_str, self.peso, self.sexo, self.dueño.id_dueño)
+                              fecha_nac_str, self.peso, self.sexo, self.dueno.id_dueno)
             logger.info(f"Mascota {self.nombre} (ID: {self.id_mascota}) guardada en base de datos")
         except Exception as e:
             logger.error(f"Error al guardar Mascota {self.id_mascota}: {e}")
@@ -109,7 +109,7 @@ class Mascota:
         try:
             fecha_nac_str = self.fecha_nacimiento.strftime('%Y-%m-%d')
             db.actualizar_mascota(self.id_mascota, self.nombre, self.especie, self.raza,
-                                fecha_nac_str, self.peso, self.sexo, self.dueño.id_dueño)
+                                fecha_nac_str, self.peso, self.sexo, self.dueno.id_dueno)
             logger.info(f"Mascota {self.nombre} (ID: {self.id_mascota}) actualizada en base de datos")
         except Exception as e:
             logger.error(f"Error al actualizar Mascota {self.id_mascota}: {e}")
@@ -125,7 +125,7 @@ class Mascota:
             raise
 
     @staticmethod
-    def load(db, id_mascota: int, dueño):
+    def load(db, id_mascota: int, dueno):
         """Carga una mascota desde la base de datos."""
         try:
             mascota_data = db.obtener_mascota_por_id(id_mascota)
@@ -139,7 +139,7 @@ class Mascota:
                     fecha_nacimiento=mascota_data['fecha_nacimiento'].strftime('%Y-%m-%d'),
                     peso=mascota_data['peso'],
                     sexo=mascota_data['sexo'],
-                    dueño=dueño
+                    dueno=dueno
                 )
             logger.warning(f"Mascota {id_mascota} no encontrada en base de datos")
             return None
@@ -157,5 +157,5 @@ class Mascota:
             f"Especie: {self.especie} - Raza: {self.raza}\n"
             f"Edad: {self.calcular_edad()} años - Peso: {self.peso} kg\n"
             f"Sexo: {self.sexo}\n"
-            f"Dueño: {self.dueño.nombre} (ID: {self.dueño.id_dueño})"
+            f"Dueño: {self.dueno.nombre} (ID: {self.dueno.id_dueno})"
         )

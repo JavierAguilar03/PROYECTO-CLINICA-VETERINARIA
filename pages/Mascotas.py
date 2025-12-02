@@ -28,7 +28,7 @@ with tab1:
     try:
         db = init_db()
         if db.connect():
-            mascotas = db.fetch_all("SELECT m.*, d.nombre as dueno_nombre FROM mascotas m LEFT JOIN duenos d ON m.id_dueno = d.id_dueño")
+            mascotas = db.fetch_all("SELECT m.*, d.nombre as dueno_nombre FROM mascotas m LEFT JOIN duenos d ON m.id_dueno = d.id_dueno")
             db.disconnect()
             
             if mascotas:

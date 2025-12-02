@@ -52,7 +52,7 @@ with tab1:
                         col1, col2 = st.columns(2)
                         
                         with col1:
-                            st.write(f"**ID**: {dueno['id_dueño']}")
+                            st.write(f"**ID**: {dueno['id_dueno']}")
                             st.write(f"**Nombre**: {dueno['nombre']}")
                             st.write(f"**DNI**: {dueno['dni']}")
                             st.write(f"**Teléfono**: {dueno['telefono']}")
