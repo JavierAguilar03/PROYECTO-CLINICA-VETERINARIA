@@ -11,8 +11,16 @@ if 'authenticated' not in st.session_state or not st.session_state.authenticated
     st.warning("⚠️ Por favor, inicie sesión primero")
     st.stop()
 
+# Control de acceso por rol
 if st.session_state.user_type != "empleado":
     st.error("🚫 Acceso restringido. Solo empleados.")
+    st.stop()
+
+user_role = st.session_state.user_data.get('tipo_empleado', '').lower()
+
+# Solo veterinarios, enfermeros y recepcionistas tienen acceso a consultas
+if user_role not in ['veterinario', 'enfermero', 'recepcionista']:
+    st.error("🚫 Acceso restringido. Los conserjes solo pueden acceder a la sección de Empleados.")
     st.stop()
 
 def init_db():
@@ -32,7 +40,22 @@ with tab1:
     try:
         db = init_db()
         if db.connect():
-            consultas = db.fetch_all("SELECT * FROM consultas ORDER BY id_consulta DESC")
+            # Filtrar según rol
+            if user_role == 'veterinario':
+                # Veterinarios solo ven consultas de sus citas
+                id_empleado = st.session_state.user_data['id_empleado']
+                query = """
+                    SELECT co.* FROM consultas co
+                    INNER JOIN citas ci ON co.id_cita = ci.id_cita
+                    WHERE ci.id_empleado = %s
+                    ORDER BY co.id_consulta DESC
+                """
+                consultas = db.fetch_all(query, (id_empleado,))
+            elif user_role in ['enfermero', 'recepcionista']:
+                # Enfermeros y recepcionistas ven todas las consultas
+                consultas = db.fetch_all("SELECT * FROM consultas ORDER BY id_consulta DESC")
+            else:
+                consultas = []
             db.disconnect()
             
             if consultas:
@@ -48,7 +71,12 @@ with tab1:
 
 with tab2:
     st.subheader("Registrar Nueva Consulta")
-    with st.form("nueva_consulta"):
+    
+    # Solo veterinarios pueden registrar consultas
+    if user_role != 'veterinario':
+        st.warning("⚠️ Solo veterinarios pueden registrar consultas médicas.")
+    else:
+        with st.form("nueva_consulta"):
         id_cita = st.number_input("ID de la Cita*", min_value=1, step=1)
         diagnostico = st.text_area("Diagnóstico*", height=100)
         tratamiento = st.text_area("Tratamiento*", height=100)

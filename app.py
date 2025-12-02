@@ -129,8 +129,9 @@ def main_app():
         st.title("👤 Usuario")
         
         if st.session_state.user_type == "empleado":
+            user_role = st.session_state.user_data.get('tipo_empleado', 'N/A')
             st.success(f"**Empleado**: {st.session_state.user_data.get('nombre', 'Usuario')}")
-            st.caption(f"Tipo: {st.session_state.user_data.get('tipo_empleado', 'N/A')}")
+            st.caption(f"Tipo: {user_role}")
         else:
             st.info(f"**Dueño**: {st.session_state.user_data.get('nombre', 'Usuario')}")
         
@@ -141,28 +142,103 @@ def main_app():
             st.rerun()
         
         st.markdown("---")
+        
+        # Mostrar páginas disponibles según el rol
+        st.caption("**Páginas disponibles:**")
+        if st.session_state.user_type == "empleado":
+            user_role = st.session_state.user_data.get('tipo_empleado', '').lower()
+            
+            if user_role == 'conserje':
+                st.caption("• 👨‍⚕️ Empleados (solo tu info)")
+            elif user_role == 'veterinario':
+                st.caption("• 📅 Citas (solo las tuyas)")
+                st.caption("• 🐾 Mascotas (solo las que atiendes)")
+                st.caption("• 🏥 Consultas (solo las tuyas)")
+                st.caption("• 👨‍⚕️ Empleados (info general)")
+            elif user_role == 'enfermero':
+                st.caption("• 📅 Citas (todas)")
+                st.caption("• 🐾 Mascotas (todas)")
+                st.caption("• 🏥 Consultas (todas)")
+                st.caption("• 👨‍⚕️ Empleados (info general)")
+            elif user_role == 'recepcionista':
+                st.caption("• 📅 Citas (todas)")
+                st.caption("• 🐾 Mascotas (todas)")
+                st.caption("• 🏥 Consultas (todas)")
+                st.caption("• 💰 Facturas (todas)")
+                st.caption("• 👥 Dueños (todos)")
+                st.caption("• 👨‍⚕️ Empleados (todos + registro)")
+        else:  # Dueño
+            st.caption("• 📅 Citas (solo las de tus mascotas)")
+            st.caption("• 🐾 Mascotas (solo las tuyas)")
+            st.caption("• 👥 Dueños (solo tu info)")
+        
+        st.markdown("---")
         st.caption("Sistema de Gestión v1.0")
     
     # Contenido principal
     st.title("🐾 Sistema de Gestión de Clínica Veterinaria")
     
     if st.session_state.user_type == "empleado":
-        st.markdown("""
-        ### Panel de Empleado
+        user_role = st.session_state.user_data.get('tipo_empleado', '').lower()
         
-        Bienvenido al sistema de gestión. Desde aquí puede:
+        st.markdown(f"""
+        ### Panel de Empleado - {st.session_state.user_data.get('tipo_empleado', 'N/A')}
         
-        - 📋 **Gestionar Citas**: Ver, crear y modificar citas
-        - 🏥 **Consultas**: Registrar diagnósticos y tratamientos
-        - 💰 **Facturas**: Generar y enviar facturas
-        - 🐕 **Mascotas**: Consultar historial de mascotas
-        - 👥 **Dueños**: Gestionar información de clientes
-        - 👨‍💼 **Empleados**: Administrar personal
-        
-        👈 **Use el menú lateral** para navegar entre las diferentes secciones.
+        Bienvenido al sistema de gestión.
         """)
         
-        st.info("💡 **Consejo**: Todas las páginas están disponibles en el menú lateral izquierdo.")
+        # Mostrar accesos según rol
+        if user_role == 'conserje':
+            st.info("""
+            **Acceso Limitado - Conserje**
+            
+            Como conserje, solo tienes acceso a:
+            - 👨‍⚕️ **Empleados**: Ver tu información personal y salario
+            
+            👈 Accede desde el menú lateral.
+            """)
+            
+        elif user_role == 'veterinario':
+            st.markdown("""
+            **Accesos disponibles:**
+            
+            - 📋 **Citas**: Ver y gestionar solo las citas asignadas a ti
+            - 🐕 **Mascotas**: Ver información de las mascotas que atiendes
+            - 🏥 **Consultas**: Registrar diagnósticos y tratamientos de tus citas
+            - 👨‍💼 **Empleados**: Ver información general del equipo
+            
+            👈 **Use el menú lateral** para navegar entre secciones.
+            """)
+            
+        elif user_role == 'enfermero':
+            st.markdown("""
+            **Accesos disponibles:**
+            
+            - 📋 **Citas**: Ver todas las citas de la clínica
+            - 🐕 **Mascotas**: Acceso completo a información de todas las mascotas
+            - 🏥 **Consultas**: Ver todas las consultas médicas
+            - 👨‍💼 **Empleados**: Ver información del equipo
+            
+            👈 **Use el menú lateral** para navegar entre secciones.
+            """)
+            
+        elif user_role == 'recepcionista':
+            st.markdown("""
+            **Acceso Completo - Recepcionista**
+            
+            Como recepcionista, tienes acceso total a:
+            
+            - 📋 **Gestionar Citas**: Ver, crear y modificar todas las citas
+            - 🏥 **Consultas**: Ver todas las consultas médicas
+            - 💰 **Facturas**: Generar y gestionar facturas
+            - 🐕 **Mascotas**: Gestionar información de todas las mascotas
+            - 👥 **Dueños**: Registrar y gestionar información de clientes
+            - 👨‍💼 **Empleados**: Administrar todo el personal
+            
+            👈 **Use el menú lateral** para navegar entre las diferentes secciones.
+            """)
+        
+        st.info("💡 **Consejo**: Las páginas están disponibles en el menú lateral izquierdo según tus permisos.")
         
     else:  # Dueño
         st.markdown("""
@@ -171,13 +247,14 @@ def main_app():
         Bienvenido. Desde aquí puede:
         
         - 📅 **Registrar Citas**: Solicitar nuevas citas para sus mascotas
-        - 🐾 **Ver Mascotas**: Consultar información de sus mascotas
-        - 📜 **Historial**: Ver citas y consultas previas
+        - 🐾 **Ver Mascotas**: Consultar y registrar información de sus mascotas
+        - 📜 **Historial**: Ver citas previas de sus mascotas
+        - 👤 **Mi Perfil**: Ver su información personal
         
         👈 **Use el menú lateral** para acceder a las opciones disponibles.
         """)
         
-        st.warning("⚠️ **Acceso Limitado**: Como dueño, solo tiene acceso a ciertas funcionalidades.")
+        st.warning("⚠️ **Acceso Limitado**: Como dueño, solo tiene acceso a información relacionada con sus mascotas.")
         
         # Botón rápido para citas
         col1, col2, col3 = st.columns([1, 2, 1])

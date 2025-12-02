@@ -15,6 +15,14 @@ if 'authenticated' not in st.session_state or not st.session_state.authenticated
     st.warning("⚠️ Por favor, inicie sesión primero")
     st.stop()
 
+# Control de acceso por rol
+user_role = st.session_state.user_data.get('tipo_empleado', '').lower() if st.session_state.user_type == 'empleado' else 'dueño'
+
+# Conserjes NO tienen acceso a citas
+if user_role == 'conserje':
+    st.error("🚫 Acceso restringido. Los conserjes solo pueden acceder a la sección de Empleados.")
+    st.stop()
+
 def init_db():
     """Inicializa la conexión a la base de datos."""
     host = os.getenv('DB_HOST', 'localhost')
@@ -45,17 +53,68 @@ with tab1:
     try:
         db = init_db()
         if db.connect():
-            if filter_estado == "Todas":
-                query = """
-                    SELECT c.*, m.nombre as mascota_nombre, e.nombre as empleado_nombre
-                    FROM citas c
-                    LEFT JOIN mascotas m ON c.id_mascota = m.id_mascota
-                    LEFT JOIN empleados e ON c.id_empleado = e.id_empleado
-                    ORDER BY c.fecha DESC, c.hora DESC
-                """
-                citas = db.fetch_all(query)
+            # Filtrar según el rol del usuario
+            if user_role == 'dueño':
+                # Dueños solo ven citas de sus mascotas
+                id_dueno = st.session_state.user_data['id_dueno']
+                if filter_estado == "Todas":
+                    query = """
+                        SELECT c.*, m.nombre as mascota_nombre, e.nombre as empleado_nombre
+                        FROM citas c
+                        LEFT JOIN mascotas m ON c.id_mascota = m.id_mascota
+                        LEFT JOIN empleados e ON c.id_empleado = e.id_empleado
+                        WHERE m.id_dueno = %s
+                        ORDER BY c.fecha DESC, c.hora DESC
+                    """
+                    citas = db.fetch_all(query, (id_dueno,))
+                else:
+                    query = """
+                        SELECT c.*, m.nombre as mascota_nombre, e.nombre as empleado_nombre
+                        FROM citas c
+                        LEFT JOIN mascotas m ON c.id_mascota = m.id_mascota
+                        LEFT JOIN empleados e ON c.id_empleado = e.id_empleado
+                        WHERE m.id_dueno = %s AND c.estado = %s
+                        ORDER BY c.fecha DESC, c.hora DESC
+                    """
+                    citas = db.fetch_all(query, (id_dueno, filter_estado))
+            elif user_role == 'veterinario':
+                # Veterinarios solo ven citas asignadas a ellos
+                id_empleado = st.session_state.user_data['id_empleado']
+                if filter_estado == "Todas":
+                    query = """
+                        SELECT c.*, m.nombre as mascota_nombre, e.nombre as empleado_nombre
+                        FROM citas c
+                        LEFT JOIN mascotas m ON c.id_mascota = m.id_mascota
+                        LEFT JOIN empleados e ON c.id_empleado = e.id_empleado
+                        WHERE c.id_empleado = %s
+                        ORDER BY c.fecha DESC, c.hora DESC
+                    """
+                    citas = db.fetch_all(query, (id_empleado,))
+                else:
+                    query = """
+                        SELECT c.*, m.nombre as mascota_nombre, e.nombre as empleado_nombre
+                        FROM citas c
+                        LEFT JOIN mascotas m ON c.id_mascota = m.id_mascota
+                        LEFT JOIN empleados e ON c.id_empleado = e.id_empleado
+                        WHERE c.id_empleado = %s AND c.estado = %s
+                        ORDER BY c.fecha DESC, c.hora DESC
+                    """
+                    citas = db.fetch_all(query, (id_empleado, filter_estado))
+            elif user_role in ['enfermero', 'recepcionista']:
+                # Enfermeros y recepcionistas ven todas las citas
+                if filter_estado == "Todas":
+                    query = """
+                        SELECT c.*, m.nombre as mascota_nombre, e.nombre as empleado_nombre
+                        FROM citas c
+                        LEFT JOIN mascotas m ON c.id_mascota = m.id_mascota
+                        LEFT JOIN empleados e ON c.id_empleado = e.id_empleado
+                        ORDER BY c.fecha DESC, c.hora DESC
+                    """
+                    citas = db.fetch_all(query)
+                else:
+                    citas = db.obtener_citas_por_estado(filter_estado)
             else:
-                citas = db.obtener_citas_por_estado(filter_estado)
+                citas = []
             
             db.disconnect()
             
@@ -117,12 +176,23 @@ with tab2:
             try:
                 db = init_db()
                 if db.connect():
-                    if st.session_state.user_type == "dueño":
+                    if user_role == 'dueño':
                         # Solo mascotas del dueño
                         mascotas = db.obtener_mascotas_por_dueno(st.session_state.user_data['id_dueno'])
-                    else:
-                        # Todas las mascotas para empleados
+                    elif user_role == 'veterinario':
+                        # Veterinarios ven mascotas de sus citas
+                        id_empleado = st.session_state.user_data['id_empleado']
+                        query = """
+                            SELECT DISTINCT m.* FROM mascotas m
+                            INNER JOIN citas c ON m.id_mascota = c.id_mascota
+                            WHERE c.id_empleado = %s
+                        """
+                        mascotas = db.fetch_all(query, (id_empleado,))
+                    elif user_role in ['enfermero', 'recepcionista']:
+                        # Enfermeros y recepcionistas ven todas las mascotas
                         mascotas = db.fetch_all("SELECT * FROM mascotas")
+                    else:
+                        mascotas = []
                     db.disconnect()
                     
                     if mascotas:

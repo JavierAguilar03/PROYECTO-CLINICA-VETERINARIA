@@ -9,14 +9,28 @@ from src.database_conn.db_conn import DatabaseConnection
 
 st.set_page_config(page_title="Dueños - Clínica Veterinaria", page_icon="👥", layout="wide")
 
-# Verificar autenticación (solo empleados)
+# Verificar autenticación
 if 'authenticated' not in st.session_state or not st.session_state.authenticated:
     st.warning("⚠️ Por favor, inicie sesión primero")
     st.stop()
 
-if st.session_state.user_type != "empleado":
-    st.error("🚫 Acceso restringido. Solo empleados pueden acceder a esta sección.")
+# Control de acceso por rol
+user_role = st.session_state.user_data.get('tipo_empleado', '').lower() if st.session_state.user_type == 'empleado' else 'dueño'
+
+# Dueños pueden ver solo su información, conserjes no tienen acceso, otros empleados ven según permiso
+if user_role == 'conserje':
+    st.error("🚫 Acceso restringido. Los conserjes solo pueden acceder a la sección de Empleados.")
     st.stop()
+
+if user_role == 'dueño':
+    # Dueños solo ven su propia información
+    is_owner_view = True
+elif user_role in ['veterinario', 'enfermero']:
+    st.error("🚫 Acceso restringido. Solo recepcionistas pueden gestionar información de dueños.")
+    st.stop()
+else:
+    # Recepcionistas tienen acceso completo
+    is_owner_view = False
 
 def init_db():
     """Inicializa la conexión a la base de datos."""
@@ -36,12 +50,22 @@ tab1, tab2, tab3 = st.tabs(["📋 Ver Dueños", "➕ Nuevo Dueño", "🔍 Buscar
 
 # TAB 1: Ver Dueños
 with tab1:
-    st.subheader("Lista de Dueños Registrados")
+    if is_owner_view:
+        st.subheader("Mi Información")
+    else:
+        st.subheader("Lista de Dueños Registrados")
     
     try:
         db = init_db()
         if db.connect():
-            duenos = db.obtener_todos_duenos()
+            if is_owner_view:
+                # Dueños solo ven su propia información
+                id_dueno = st.session_state.user_data['id_dueno']
+                dueno = db.obtener_dueno(id_dueno)
+                duenos = [dueno] if dueno else []
+            else:
+                # Recepcionistas ven todos los dueños
+                duenos = db.obtener_todos_duenos()
             db.disconnect()
             
             if duenos:
@@ -69,9 +93,12 @@ with tab1:
 
 # TAB 2: Nuevo Dueño
 with tab2:
-    st.subheader("Registrar Nuevo Dueño")
-    
-    with st.form("nuevo_dueno"):
+    if is_owner_view:
+        st.info("ℹ️ Los dueños no pueden registrar nuevos dueños. Contacte con recepción.")
+    else:
+        st.subheader("Registrar Nuevo Dueño")
+        
+        with st.form("nuevo_dueno"):
         col1, col2 = st.columns(2)
         
         with col1:
@@ -106,20 +133,23 @@ with tab2:
 
 # TAB 3: Buscar
 with tab3:
-    st.subheader("Buscar Dueño")
-    
-    id_buscar = st.number_input("ID del dueño", min_value=1, step=1)
-    if st.button("🔍 Buscar"):
-        try:
-            db = init_db()
-            if db.connect():
-                dueno = db.obtener_dueno(id_buscar)
-                db.disconnect()
-                
-                if dueno:
-                    st.success("Dueño encontrado")
-                    st.json(dueno)
-                else:
-                    st.warning("No se encontró el dueño")
-        except Exception as e:
-            st.error(f"Error: {str(e)}")
+    if is_owner_view:
+        st.info("ℹ️ Puede ver su información en la pestaña 'Ver Dueños'.")
+    else:
+        st.subheader("Buscar Dueño")
+        
+        id_buscar = st.number_input("ID del dueño", min_value=1, step=1)
+        if st.button("🔍 Buscar"):
+            try:
+                db = init_db()
+                if db.connect():
+                    dueno = db.obtener_dueno(id_buscar)
+                    db.disconnect()
+                    
+                    if dueno:
+                        st.success("Dueño encontrado")
+                        st.json(dueno)
+                    else:
+                        st.warning("No se encontró el dueño")
+            except Exception as e:
+                st.error(f"Error: {str(e)}")

@@ -11,8 +11,16 @@ if 'authenticated' not in st.session_state or not st.session_state.authenticated
     st.warning("⚠️ Por favor, inicie sesión primero")
     st.stop()
 
+# Control de acceso por rol
 if st.session_state.user_type != "empleado":
     st.error("🚫 Acceso restringido. Solo empleados.")
+    st.stop()
+
+user_role = st.session_state.user_data.get('tipo_empleado', '').lower()
+
+# Solo recepcionistas tienen acceso completo a facturas
+if user_role not in ['recepcionista']:
+    st.error("🚫 Acceso restringido. Solo recepcionistas pueden gestionar facturas.")
     st.stop()
 
 def init_db():
