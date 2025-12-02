@@ -15,9 +15,9 @@ logger = logging.getLogger('db_conn')
 class DatabaseConnection:
     def __init__(self, host: str, user: str, password: str, database: str):
         self.host = host
-        self.user = user
-        self.password = password
-        self.database = database
+        self.user = "root"
+        self.password = "1234"
+        self.database = "clinica_veterinaria"
         self.connection: Optional[mysql.connector.connection.MySQLConnection] = None
 
     def connect(self) -> bool:
