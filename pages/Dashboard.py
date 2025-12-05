@@ -25,7 +25,10 @@ if st.session_state.user_type != 'empleado':
 
 def init_db():
     """Inicializa la conexión a la base de datos."""
-    host = "",user = "",password = "",database = ""
+    host = ""
+    user = ""
+    password = ""
+    database = ""
     db = DatabaseConnection(host, user, password, database)
     return db
 
