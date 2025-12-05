@@ -24,11 +24,10 @@ if 'user_data' not in st.session_state:
 def init_db_connection():
     """Inicializa la conexión a la base de datos."""
     # Obtener credenciales desde variables de entorno o usar valores por defecto
-    host = os.getenv('DB_HOST', 'localhost')
-    user = os.getenv('DB_USER', 'root')
-    password = os.getenv('DB_PASSWORD', '')
-    database = os.getenv('DB_NAME', 'clinica_veterinaria')
-    
+    host = ""
+    user = ""
+    password = ""
+    database = ""
     db = DatabaseConnection(host, user, password, database)
     return db
 
