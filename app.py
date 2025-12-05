@@ -119,6 +119,11 @@ def login_page():
 
 def main_app():
     """Aplicación principal después del login."""
+    
+    # Redirigir a empleados al Dashboard automáticamente
+    if st.session_state.user_type == "empleado":
+        st.switch_page("pages/Dashboard.py")
+    
     # Sidebar con información del usuario
     with st.sidebar:
         st.title("👤 Usuario")
@@ -143,6 +148,7 @@ def main_app():
         if st.session_state.user_type == "empleado":
             user_role = st.session_state.user_data.get('tipo_empleado', '').lower()
             
+            st.caption("• 📊 Dashboard (vista general)")
             if user_role == 'conserje':
                 st.caption("• 👨‍⚕️ Empleados (solo tu info)")
             elif user_role == 'veterinario':
