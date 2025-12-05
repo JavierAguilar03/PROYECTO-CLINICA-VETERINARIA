@@ -23,7 +23,10 @@ if 'user_data' not in st.session_state:
 
 def init_db_connection():
     """Inicializa la conexión a la base de datos."""
-    host = "",user = "",password = "",database = ""
+    host = ""
+    user = ""
+    password = ""
+    database = ""
     db = DatabaseConnection(host, user, password, database)
     return db
 
