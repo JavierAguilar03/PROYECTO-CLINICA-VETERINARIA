@@ -105,8 +105,7 @@ class Cita:
         try:
             fecha_str = self.fecha.strftime('%Y-%m-%d')
             hora_str = self.hora.strftime('%H:%M')
-            db.actualizar_cita(self.id_cita, fecha_str, hora_str, self.motivo, 
-                             self.id_mascota, self.id_empleado, self.estado)
+            db.actualizar_cita(self.id_cita, fecha_str, hora_str, self.estado)
             logger.info(f"Cita {self.id_cita} actualizada en base de datos")
         except Exception as e:
             logger.error(f"Error al actualizar Cita {self.id_cita}: {e}")

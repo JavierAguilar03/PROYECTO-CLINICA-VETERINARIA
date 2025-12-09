@@ -120,9 +120,8 @@ class Dueno(Persona):
     def update(self, db):
         """Actualiza el dueño en la base de datos."""
         try:
-            fecha_nac_str = self.fecha_nacimiento.strftime('%Y-%m-%d')
-            db.actualizar_dueno(self.id_dueno, self.nombre, self.dni, self.telefono,
-                              self.email, fecha_nac_str, self.direccion)
+            db.actualizar_dueno(self.id_dueno, self.nombre, self.telefono,
+                              self.email, self.direccion)
             logger.info(f"Dueño {self.nombre} (ID: {self.id_dueno}) actualizado en base de datos")
         except Exception as e:
             logger.error(f"Error al actualizar Dueño {self.id_dueno}: {e}")

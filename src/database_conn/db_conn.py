@@ -59,6 +59,26 @@ class DatabaseConnection:
             return False
         finally:
             cursor.close()
+    
+    def execute_insert(self, query: str, params: Optional[tuple] = None) -> Optional[int]:
+        """Ejecuta un INSERT y retorna el ID generado."""
+        if not self.connection or not self.connection.is_connected():
+            logger.error("Intento de ejecutar query sin conexión activa")
+            raise ConnectionError("Database not connected")
+        cursor = self.connection.cursor()
+        try:
+            logger.debug(f"Ejecutando INSERT: {query} con params: {params}")
+            cursor.execute(query, params)
+            self.connection.commit()
+            last_id = cursor.lastrowid
+            logger.info(f"INSERT ejecutado exitosamente, ID generado: {last_id}")
+            return last_id
+        except Error as e:
+            logger.error(f"Error al ejecutar INSERT: {str(e)}")
+            self.connection.rollback()
+            return None
+        finally:
+            cursor.close()
 
     def fetch_one(self, query: str, params: Optional[tuple] = None) -> Optional[Any]:
         if not self.connection or not self.connection.is_connected():
@@ -100,9 +120,7 @@ class DatabaseConnection:
             INSERT INTO duenos (nombre, dni, telefono, email, fecha_nacimiento, direccion)
             VALUES (%s, %s, %s, %s, %s, %s)
         """
-        if self.execute_query(query, (nombre, dni, telefono, email, fecha_nacimiento, direccion)):
-            return self.connection.cursor().lastrowid
-        return None
+        return self.execute_insert(query, (nombre, dni, telefono, email, fecha_nacimiento, direccion))
 
     def obtener_dueno(self, id_dueno: int) -> Optional[Any]:
         """Obtiene un dueño por su ID."""
@@ -155,9 +173,7 @@ class DatabaseConnection:
             INSERT INTO mascotas (nombre, especie, raza, fecha_nacimiento, peso, sexo, id_dueno)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
         """
-        if self.execute_query(query, (nombre, especie, raza, fecha_nacimiento, peso, sexo, id_dueno)):
-            return self.connection.cursor().lastrowid
-        return None
+        return self.execute_insert(query, (nombre, especie, raza, fecha_nacimiento, peso, sexo, id_dueno))
 
     def obtener_mascota(self, id_mascota: int) -> Optional[Any]:
         """Obtiene una mascota por su ID."""
@@ -203,9 +219,7 @@ class DatabaseConnection:
             INSERT INTO citas (fecha, hora, motivo, id_mascota, id_empleado, estado)
             VALUES (%s, %s, %s, %s, %s, %s)
         """
-        if self.execute_query(query, (fecha, hora, motivo, id_mascota, id_empleado, estado)):
-            return self.connection.cursor().lastrowid
-        return None
+        return self.execute_insert(query, (fecha, hora, motivo, id_mascota, id_empleado, estado))
 
     def obtener_cita(self, id_cita: int) -> Optional[Any]:
         """Obtiene una cita por su ID."""
@@ -260,9 +274,7 @@ class DatabaseConnection:
             INSERT INTO consultas (id_cita, diagnostico, tratamiento, observaciones)
             VALUES (%s, %s, %s, %s)
         """
-        if self.execute_query(query, (id_cita, diagnostico, tratamiento, observaciones)):
-            return self.connection.cursor().lastrowid
-        return None
+        return self.execute_insert(query, (id_cita, diagnostico, tratamiento, observaciones))
 
     def obtener_consulta(self, id_consulta: int) -> Optional[Any]:
         """Obtiene una consulta por su ID."""
@@ -307,9 +319,7 @@ class DatabaseConnection:
             INSERT INTO facturas (id_consulta, total, metodo_pago, fecha)
             VALUES (%s, %s, %s, %s)
         """
-        if self.execute_query(query, (id_consulta, total, metodo_pago, fecha)):
-            return self.connection.cursor().lastrowid
-        return None
+        return self.execute_insert(query, (id_consulta, total, metodo_pago, fecha))
 
     def obtener_factura(self, id_factura: int) -> Optional[Any]:
         """Obtiene una factura por su ID."""
@@ -353,10 +363,8 @@ class DatabaseConnection:
                                   salario, tipo_empleado, usuario, contraseña)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
-        if self.execute_query(query, (nombre, dni, telefono, email, fecha_nacimiento,
-                                     salario, tipo_empleado, usuario, contraseña)):
-            return self.connection.cursor().lastrowid
-        return None
+        return self.execute_insert(query, (nombre, dni, telefono, email, fecha_nacimiento,
+                                     salario, tipo_empleado, usuario, contraseña))
 
     def obtener_empleado(self, id_empleado: int) -> Optional[Any]:
         """Obtiene un empleado por su ID."""

@@ -107,9 +107,7 @@ class Mascota:
     def update(self, db):
         """Actualiza la mascota en la base de datos."""
         try:
-            fecha_nac_str = self.fecha_nacimiento.strftime('%Y-%m-%d')
-            db.actualizar_mascota(self.id_mascota, self.nombre, self.especie, self.raza,
-                                fecha_nac_str, self.peso, self.sexo, self.dueno.id_dueno)
+            db.actualizar_mascota(self.id_mascota, self.peso, self.nombre)
             logger.info(f"Mascota {self.nombre} (ID: {self.id_mascota}) actualizada en base de datos")
         except Exception as e:
             logger.error(f"Error al actualizar Mascota {self.id_mascota}: {e}")

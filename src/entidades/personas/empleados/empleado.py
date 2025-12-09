@@ -137,9 +137,8 @@ class Empleado(Persona, ABC):
     def update(self, db):
         """Actualiza el empleado en la base de datos."""
         try:
-            fecha_nac_str = self.fecha_nacimiento.strftime('%Y-%m-%d')
-            db.actualizar_empleado(self.id_empleado, self.nombre, self.dni, self.telefono,
-                                 self.email, fecha_nac_str, self.salario, self.tipo_empleado,
+            db.actualizar_empleado(self.id_empleado, self.telefono,
+                                 self.email, self.salario,
                                  self._credenciales.get('usuario'),
                                  self._credenciales.get('contraseña'))
             logger.info(f"Empleado {self.nombre} (ID: {self.id_empleado}) actualizado en base de datos")

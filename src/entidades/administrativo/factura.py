@@ -240,8 +240,7 @@ class Factura:
     def update(self, db):
         """Actualiza la factura en la base de datos."""
         try:
-            fecha_str = self.fecha.strftime('%Y-%m-%d') if self.fecha else None
-            db.actualizar_factura(self.id_factura, fecha_str, self.total, self.metodo_pago)
+            db.actualizar_factura(self.id_factura, self.total, self.metodo_pago)
             logger.info(f"Factura {self.id_factura} actualizada en base de datos")
         except Exception as e:
             logger.error(f"Error al actualizar Factura {self.id_factura}: {e}")
