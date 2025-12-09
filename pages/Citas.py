@@ -36,12 +36,32 @@ def init_db():
 st.title("📅 Gestión de Citas")
 st.markdown("---")
 
+# Inicializar el índice del tab activo
+if 'active_tab' not in st.session_state:
+    st.session_state.active_tab = 0
+
 # Tabs para diferentes funcionalidades
 tab1, tab2, tab3 = st.tabs(["📋 Ver Citas", "➕ Nueva Cita", "🔍 Buscar"])
 
 # TAB 1: Ver Citas
 with tab1:
     st.subheader("Lista de Citas")
+    
+    # Mostrar mensaje de éxito si se acaba de crear una cita
+    if 'cita_creada_id' in st.session_state:
+        info = st.session_state.cita_creada_info
+        st.success(f"""
+        ✅ **CITA REGISTRADA EXITOSAMENTE**
+        
+        - **ID Cita:** {st.session_state.cita_creada_id}
+        - **Dueño:** {info['dueno']}
+        - **Mascota ID:** {info['mascota_id']}
+        - **Fecha:** {info['fecha']} a las {info['hora']}
+        """)
+        st.balloons()
+        # Limpiar el mensaje después de mostrarlo
+        del st.session_state.cita_creada_id
+        del st.session_state.cita_creada_info
     
     col1, col2 = st.columns([1, 3])
     with col1:
@@ -135,8 +155,8 @@ with tab1:
                             st.write(f"**Fecha**: {cita['fecha']}")
                             st.write(f"**Hora**: {cita['hora']}")
                         
-                        # Acciones (solo para empleados)
-                        if st.session_state.user_type == "empleado":
+                        # Acciones (solo para empleados y solo si la cita está pendiente)
+                        if st.session_state.user_type == "empleado" and cita['estado'].lower() == "pendiente":
                             col_btn1, col_btn2, col_btn3 = st.columns(3)
                             with col_btn1:
                                 if st.button("✅ Completar", key=f"complete_{cita['id_cita']}"):
@@ -430,15 +450,6 @@ with tab2:
                                 db.disconnect()
                                 
                                 if id_cita:
-                                    st.success(f"""
-                                    ✅ **CITA REGISTRADA EXITOSAMENTE**
-                                    
-                                    - **ID Cita:** {id_cita}
-                                    - **Dueño:** {dueno_nombre_display}
-                                    - **Mascota ID:** {id_mascota_seleccionada}
-                                    - **Fecha:** {fecha_str} a las {hora_str}
-                                    """)
-                                    
                                     # Limpiar session_state
                                     if 'dueno_encontrado' in st.session_state:
                                         del st.session_state.dueno_encontrado
@@ -447,7 +458,17 @@ with tab2:
                                     if 'duenos_multiples' in st.session_state:
                                         del st.session_state.duenos_multiples
                                     
-                                    st.balloons()
+                                    # Marcar para mostrar mensaje de éxito en el tab de ver citas
+                                    st.session_state.cita_creada_id = id_cita
+                                    st.session_state.cita_creada_info = {
+                                        'dueno': dueno_nombre_display,
+                                        'mascota_id': id_mascota_seleccionada,
+                                        'fecha': fecha_str,
+                                        'hora': hora_str
+                                    }
+                                    st.session_state.active_tab = 0  # Cambiar al tab de ver citas
+                                    
+                                    st.rerun()
                                 else:
                                     st.error("Error al registrar la cita")
                         except Exception as e:
