@@ -6,6 +6,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from src.utils.db_utils import init_db
+from src.entidades.personas.duenos.dueno import Dueno
 
 st.set_page_config(page_title="Dueños - Clínica Veterinaria", page_icon="👥", layout="wide")
 
@@ -51,11 +52,11 @@ with tab1:
             if is_owner_view:
                 # Dueños solo ven su propia información
                 id_dueno = st.session_state.user_data['id_dueno']
-                dueno = db.obtener_dueno(id_dueno)
+                dueno = Dueno.obtener_por_id(db, id_dueno)
                 duenos = [dueno] if dueno else []
             else:
                 # Recepcionistas ven todos los dueños
-                duenos = db.obtener_todos_duenos()
+                duenos = Dueno.obtener_todos(db)
             db.disconnect()
             
             if duenos:
@@ -97,7 +98,7 @@ with tab3:
             try:
                 db = init_db()
                 if db.connect():
-                    dueno = db.obtener_dueno(id_buscar)
+                    dueno = Dueno.obtener_por_id(db, id_buscar)
                     db.disconnect()
                     
                     if dueno:

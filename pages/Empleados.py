@@ -5,6 +5,7 @@ from datetime import date
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.utils.db_utils import init_db
+from src.entidades.personas.empleados.empleado import Empleado
 
 st.set_page_config(page_title="Empleados", page_icon="👨‍⚕️", layout="wide")
 
@@ -50,12 +51,11 @@ with tab1:
             if is_limited_view:
                 # Conserjes solo ven su propia información
                 id_empleado = st.session_state.user_data['id_empleado']
-                query = "SELECT * FROM empleados WHERE id_empleado = %s"
-                empleado = db.fetch_one(query, (id_empleado,))
+                empleado = Empleado.obtener_por_id(db, id_empleado)
                 empleados = [empleado] if empleado else []
             else:
                 # Otros empleados ven todos
-                empleados = db.obtener_todos_empleados()
+                empleados = Empleado.obtener_todos(db)
             db.disconnect()
             
             if empleados:
@@ -101,7 +101,7 @@ with tab2:
                         db = init_db()
                         if db.connect():
                             fecha_str = fecha_nac.strftime("%Y-%m-%d")
-                            id_emp = db.insertar_empleado(nombre, dni, telefono, email, fecha_str, salario, tipo, usuario, password)
+                            id_emp = Empleado.crear(db, nombre, dni, telefono, email, fecha_str, salario, tipo, usuario, password)
                             db.disconnect()
                             if id_emp:
                                 st.success(f"✅ Empleado registrado (ID: {id_emp})")

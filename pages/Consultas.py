@@ -5,6 +5,9 @@ from datetime import date
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.utils.db_utils import init_db
+from src.entidades.administrativo.consulta import Consulta
+from src.entidades.administrativo.cita import Cita
+from src.entidades.administrativo.factura import Factura
 
 st.set_page_config(page_title="Consultas", page_icon="🏥", layout="wide")
 
@@ -47,7 +50,8 @@ with tab1:
                 consultas = db.fetch_all(query, (id_empleado,))
             elif user_role in ['enfermero', 'recepcionista']:
                 # Enfermeros y recepcionistas ven todas las consultas
-                consultas = db.fetch_all("SELECT * FROM consultas ORDER BY id_consulta DESC")
+                query = "SELECT * FROM consultas ORDER BY id_consulta DESC"
+                consultas = db.fetch_all(query)
             else:
                 consultas = []
             db.disconnect()
@@ -58,7 +62,7 @@ with tab1:
                     db2 = init_db()
                     factura = None
                     if db2.connect():
-                        facturas = db2.obtener_facturas_por_consulta(consulta['id_consulta'])
+                        facturas = Factura.obtener_por_consulta(db2, consulta['id_consulta'])
                         if facturas:
                             factura = facturas[0]
                         db2.disconnect()
@@ -122,15 +126,15 @@ with tab2:
                             db = init_db()
                             if db.connect():
                                 # 1. Actualizar estado de la cita a completada
-                                db.actualizar_cita(id_cita, estado="completada")
+                                Cita.actualizar_estado(db, id_cita, estado="completada")
                                 
                                 # 2. Registrar la consulta
-                                id_consulta = db.insertar_consulta(id_cita, diagnostico, tratamiento, observaciones)
+                                id_consulta = Consulta.crear(db, id_cita, diagnostico, tratamiento, observaciones)
                                 
                                 if id_consulta:
                                     # 3. Generar factura automáticamente
                                     fecha_hoy = date.today().strftime("%Y-%m-%d")
-                                    id_factura = db.insertar_factura(id_consulta, total_factura, metodo_pago, fecha_hoy)
+                                    id_factura = Factura.crear(db, id_consulta, total_factura, metodo_pago, fecha_hoy)
                                     
                                     db.disconnect()
                                     
@@ -178,19 +182,19 @@ with tab2:
                             db = init_db()
                             if db.connect():
                                 # Verificar que la cita exista y esté completada
-                                cita = db.obtener_cita(id_cita)
+                                cita = Cita.obtener_por_id(db, id_cita)
                                 if not cita:
                                     st.error("⚠️ La cita especificada no existe")
                                 elif cita['estado'].lower() != 'completada':
                                     st.warning("⚠️ La cita debe estar marcada como completada primero")
                                 else:
                                     # Registrar la consulta
-                                    id_consulta = db.insertar_consulta(id_cita, diagnostico, tratamiento, observaciones)
+                                    id_consulta = Consulta.crear(db, id_cita, diagnostico, tratamiento, observaciones)
                                     
                                     if id_consulta:
                                         # Generar factura automáticamente
                                         fecha_hoy = date.today().strftime("%Y-%m-%d")
-                                        id_factura = db.insertar_factura(id_consulta, total_factura, metodo_pago, fecha_hoy)
+                                        id_factura = Factura.crear(db, id_consulta, total_factura, metodo_pago, fecha_hoy)
                                         
                                         if id_factura:
                                             st.success(f"""✅ **CONSULTA Y FACTURA REGISTRADAS**

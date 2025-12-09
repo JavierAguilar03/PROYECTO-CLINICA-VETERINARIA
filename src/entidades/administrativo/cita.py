@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional, List, Dict, Any
 
 
 class Cita:
@@ -21,3 +22,61 @@ class Cita:
         if estado not in Cita.ESTADOS_VALIDOS:
             raise ValueError(f"Estado '{estado}' inválido. Debe ser uno de {Cita.ESTADOS_VALIDOS}.")
         self.estado = estado
+
+    # ------------------------------
+    # Métodos de negocio
+    # ------------------------------
+
+    def marcar_como_completada(self):
+        """Marca la cita como completada."""
+        if self.estado == "cancelada":
+            raise ValueError("No se puede completar una cita cancelada.")
+        self.estado = "completada"
+
+    def cancelar(self):
+        """Marca la cita como cancelada."""
+        if self.estado == "completada":
+            raise ValueError("No se puede cancelar una cita completada.")
+        self.estado = "cancelada"
+
+    # ------------------------------
+    # Métodos estáticos de acceso a datos
+    # ------------------------------
+
+    @staticmethod
+    def crear(db, fecha: str, hora: str, motivo: str, id_mascota: int,
+              id_empleado: int, estado: str = "pendiente") -> Optional[int]:
+        """Crea una nueva cita en la base de datos y retorna su ID."""
+        return db.insertar_cita(fecha, hora, motivo, id_mascota, id_empleado, estado)
+
+    @staticmethod
+    def obtener_por_id(db, id_cita: int) -> Optional[Dict[str, Any]]:
+        """Obtiene una cita por su ID."""
+        return db.obtener_cita(id_cita)
+
+    @staticmethod
+    def obtener_por_mascota(db, id_mascota: int) -> List[Dict[str, Any]]:
+        """Obtiene todas las citas de una mascota."""
+        return db.obtener_citas_por_mascota(id_mascota)
+
+    @staticmethod
+    def obtener_por_estado(db, estado: str) -> List[Dict[str, Any]]:
+        """Obtiene todas las citas con un estado específico."""
+        return db.obtener_citas_por_estado(estado)
+
+    @staticmethod
+    def obtener_todas_filtradas(db, query: str, params: tuple = None) -> List[Dict[str, Any]]:
+        """Ejecuta una consulta personalizada para obtener citas filtradas."""
+        return db.fetch_all(query, params)
+
+    @staticmethod
+    def actualizar_estado(db, id_cita: int, estado: str) -> bool:
+        """Actualiza el estado de una cita."""
+        if estado not in Cita.ESTADOS_VALIDOS:
+            raise ValueError(f"Estado '{estado}' inválido. Debe ser uno de {Cita.ESTADOS_VALIDOS}.")
+        return db.actualizar_cita(id_cita, estado=estado)
+
+    @staticmethod
+    def eliminar(db, id_cita: int) -> bool:
+        """Elimina una cita de la base de datos."""
+        return db.eliminar_cita(id_cita)

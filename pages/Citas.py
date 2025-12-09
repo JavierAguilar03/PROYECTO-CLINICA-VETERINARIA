@@ -7,6 +7,12 @@ from datetime import datetime, date
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from src.utils.db_utils import init_db
+from src.entidades.administrativo.cita import Cita
+from src.entidades.administrativo.consulta import Consulta
+from src.entidades.administrativo.factura import Factura
+from src.entidades.mascotas.mascota import Mascota
+from src.entidades.personas.duenos.dueno import Dueno
+from src.entidades.personas.empleados.empleado import Empleado
 
 st.set_page_config(page_title="Citas - Clínica Veterinaria", page_icon="📅", layout="wide")
 
@@ -53,16 +59,16 @@ def modal_completar_cita(cita):
                 try:
                     db = init_db()
                     if db.connect():
-                        # 1. Actualizar estado de la cita a completada
-                        db.actualizar_cita(cita['id_cita'], estado="completada")
+                        # 1. Actualizar estado de la cita a completada usando entidad Cita
+                        Cita.actualizar_estado(db, cita['id_cita'], "completada")
                         
-                        # 2. Registrar la consulta
-                        id_consulta = db.insertar_consulta(cita['id_cita'], diagnostico, tratamiento, observaciones)
+                        # 2. Registrar la consulta usando entidad Consulta
+                        id_consulta = Consulta.crear(db, cita['id_cita'], diagnostico, tratamiento, observaciones)
                         
                         if id_consulta:
-                            # 3. Generar factura automáticamente
+                            # 3. Generar factura automáticamente usando entidad Factura
                             fecha_hoy = date.today().strftime("%Y-%m-%d")
-                            id_factura = db.insertar_factura(id_consulta, total_factura, metodo_pago, fecha_hoy)
+                            id_factura = Factura.crear(db, id_consulta, total_factura, metodo_pago, fecha_hoy)
                             
                             db.disconnect()
                             
@@ -145,7 +151,7 @@ with tab1:
                         WHERE m.id_dueno = %s
                         ORDER BY c.fecha DESC, c.hora DESC
                     """
-                    citas = db.fetch_all(query, (id_dueno,))
+                    citas = Cita.obtener_todas_filtradas(db, query, (id_dueno,))
                 else:
                     query = """
                         SELECT c.*, m.nombre as mascota_nombre, e.nombre as empleado_nombre
@@ -155,7 +161,7 @@ with tab1:
                         WHERE m.id_dueno = %s AND c.estado = %s
                         ORDER BY c.fecha DESC, c.hora DESC
                     """
-                    citas = db.fetch_all(query, (id_dueno, filter_estado))
+                    citas = Cita.obtener_todas_filtradas(db, query, (id_dueno, filter_estado))
             elif user_role == 'veterinario':
                 # Veterinarios solo ven citas asignadas a ellos
                 id_empleado = st.session_state.user_data['id_empleado']
@@ -168,7 +174,7 @@ with tab1:
                         WHERE c.id_empleado = %s
                         ORDER BY c.fecha DESC, c.hora DESC
                     """
-                    citas = db.fetch_all(query, (id_empleado,))
+                    citas = Cita.obtener_todas_filtradas(db, query, (id_empleado,))
                 else:
                     query = """
                         SELECT c.*, m.nombre as mascota_nombre, e.nombre as empleado_nombre
@@ -178,7 +184,7 @@ with tab1:
                         WHERE c.id_empleado = %s AND c.estado = %s
                         ORDER BY c.fecha DESC, c.hora DESC
                     """
-                    citas = db.fetch_all(query, (id_empleado, filter_estado))
+                    citas = Cita.obtener_todas_filtradas(db, query, (id_empleado, filter_estado))
             elif user_role in ['enfermero', 'recepcionista']:
                 # Enfermeros y recepcionistas ven todas las citas
                 if filter_estado == "Todas":
@@ -189,7 +195,7 @@ with tab1:
                         LEFT JOIN empleados e ON c.id_empleado = e.id_empleado
                         ORDER BY c.fecha DESC, c.hora DESC
                     """
-                    citas = db.fetch_all(query)
+                    citas = Cita.obtener_todas_filtradas(db, query)
                 else:
                     query = """
                         SELECT c.*, m.nombre as mascota_nombre, e.nombre as empleado_nombre
@@ -199,7 +205,7 @@ with tab1:
                         WHERE c.estado = %s
                         ORDER BY c.fecha DESC, c.hora DESC
                     """
-                    citas = db.fetch_all(query, (filter_estado,))
+                    citas = Cita.obtener_todas_filtradas(db, query, (filter_estado,))
             else:
                 citas = []
             
@@ -233,7 +239,7 @@ with tab1:
                                 if st.button("❌ Cancelar", key=f"cancel_{cita['id_cita']}"):
                                     db2 = init_db()
                                     if db2.connect():
-                                        db2.actualizar_cita(cita['id_cita'], estado="cancelada")
+                                        Cita.actualizar_estado(db2, cita['id_cita'], "cancelada")
                                         db2.disconnect()
                                         st.success("Cita cancelada")
                                         st.rerun()
@@ -275,7 +281,7 @@ with tab2:
                     db = init_db()
                     if db.connect():
                         query = "SELECT * FROM duenos WHERE dni = %s AND nombre LIKE %s"
-                        duenos_encontrados = db.fetch_all(query, (dni_buscar, f"%{nombre_buscar}%"))
+                        duenos_encontrados = Dueno.buscar(db, query, (dni_buscar, f"%{nombre_buscar}%"))
                         db.disconnect()
                         
                         if duenos_encontrados:
@@ -342,8 +348,8 @@ with tab2:
                         db = init_db()
                         if db.connect():
                             fecha_nac_str = nuevo_dueno_fecha_nac.strftime("%Y-%m-%d")
-                            id_dueno_nuevo = db.insertar_dueno(
-                                nuevo_dueno_nombre, nuevo_dueno_dni, nuevo_dueno_telefono,
+                            id_dueno_nuevo = Dueno.crear(
+                                db, nuevo_dueno_nombre, nuevo_dueno_dni, nuevo_dueno_telefono,
                                 nuevo_dueno_email, fecha_nac_str, nuevo_dueno_direccion or ""
                             )
                             db.disconnect()
@@ -388,7 +394,7 @@ with tab2:
             try:
                 db = init_db()
                 if db.connect():
-                    mascotas_dueno = db.obtener_mascotas_por_dueno(id_dueno_seleccionado)
+                    mascotas_dueno = Mascota.obtener_por_dueno(db, id_dueno_seleccionado)
                     db.disconnect()
                     
                     if mascotas_dueno:
@@ -445,8 +451,8 @@ with tab2:
                             db = init_db()
                             if db.connect():
                                 fecha_nac_str = nueva_mascota_fecha_nac.strftime("%Y-%m-%d")
-                                id_mascota_nueva = db.insertar_mascota(
-                                    nueva_mascota_nombre, nueva_mascota_especie, nueva_mascota_raza,
+                                id_mascota_nueva = Mascota.crear(
+                                    db, nueva_mascota_nombre, nueva_mascota_especie, nueva_mascota_raza,
                                     fecha_nac_str, nueva_mascota_peso, nueva_mascota_sexo, id_dueno_seleccionado
                                 )
                                 db.disconnect()
@@ -483,8 +489,7 @@ with tab2:
                     try:
                         db = init_db()
                         if db.connect():
-                            query = "SELECT * FROM empleados WHERE tipo_empleado = 'Veterinario'"
-                            veterinarios = db.fetch_all(query)
+                            veterinarios = Empleado.obtener_todos(db, tipo='Veterinario')
                             db.disconnect()
                             
                             if veterinarios:
@@ -513,8 +518,8 @@ with tab2:
                                 fecha_str = fecha_cita.strftime("%Y-%m-%d")
                                 hora_str = hora_cita.strftime("%H:%M")
                                 
-                                id_cita = db.insertar_cita(fecha_str, hora_str, motivo_cita, 
-                                                          id_mascota_seleccionada, id_empleado_cita, estado_cita)
+                                id_cita = Cita.crear(db, fecha_str, hora_str, motivo_cita, 
+                                                    id_mascota_seleccionada, id_empleado_cita, estado_cita)
                                 db.disconnect()
                                 
                                 if id_cita:
@@ -558,17 +563,7 @@ with tab3:
             try:
                 db = init_db()
                 if db.connect():
-                    # Query con JOINs para obtener nombres
-                    query = """
-                        SELECT c.*, m.nombre as mascota_nombre, m.especie, 
-                               e.nombre as veterinario_nombre, d.nombre as dueno_nombre
-                        FROM citas c
-                        LEFT JOIN mascotas m ON c.id_mascota = m.id_mascota
-                        LEFT JOIN empleados e ON c.id_empleado = e.id_empleado
-                        LEFT JOIN duenos d ON m.id_dueno = d.id_dueno
-                        WHERE c.id_cita = %s
-                    """
-                    cita = db.fetch_one(query, (id_buscar,))
+                    cita = Cita.obtener_por_id(db, id_buscar)
                     db.disconnect()
                     
                     if cita:
@@ -597,17 +592,7 @@ with tab3:
             try:
                 db = init_db()
                 if db.connect():
-                    # Query con JOINs
-                    query = """
-                        SELECT c.*, m.nombre as mascota_nombre, m.especie,
-                               e.nombre as veterinario_nombre
-                        FROM citas c
-                        LEFT JOIN mascotas m ON c.id_mascota = m.id_mascota
-                        LEFT JOIN empleados e ON c.id_empleado = e.id_empleado
-                        WHERE c.id_mascota = %s
-                        ORDER BY c.fecha DESC, c.hora DESC
-                    """
-                    citas = db.fetch_all(query, (id_mascota_buscar,))
+                    citas = Cita.obtener_por_mascota(db, id_mascota_buscar)
                     db.disconnect()
                     
                     if citas:

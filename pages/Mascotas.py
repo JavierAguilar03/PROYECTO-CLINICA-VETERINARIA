@@ -4,6 +4,7 @@ import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.utils.db_utils import init_db
+from src.entidades.mascotas.mascota import Mascota
 
 st.set_page_config(page_title="Mascotas", page_icon="🐾", layout="wide")
 
@@ -33,8 +34,7 @@ with tab1:
             if user_role == 'dueño':
                 # Dueños solo ven sus mascotas
                 id_dueno = st.session_state.user_data['id_dueno']
-                query = "SELECT m.*, d.nombre as dueno_nombre FROM mascotas m LEFT JOIN duenos d ON m.id_dueno = d.id_dueno WHERE m.id_dueno = %s"
-                mascotas = db.fetch_all(query, (id_dueno,))
+                mascotas = Mascota.obtener_por_dueno(db, id_dueno)
             elif user_role == 'veterinario':
                 # Veterinarios solo ven mascotas que atienden (con citas asignadas)
                 id_empleado = st.session_state.user_data['id_empleado']
@@ -48,7 +48,7 @@ with tab1:
                 mascotas = db.fetch_all(query, (id_empleado,))
             elif user_role in ['enfermero', 'recepcionista']:
                 # Enfermeros y recepcionistas ven todas las mascotas
-                mascotas = db.fetch_all("SELECT m.*, d.nombre as dueno_nombre FROM mascotas m LEFT JOIN duenos d ON m.id_dueno = d.id_dueno")
+                mascotas = Mascota.obtener_todas(db)
             else:
                 mascotas = []
             db.disconnect()
