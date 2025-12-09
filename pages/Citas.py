@@ -201,7 +201,15 @@ with tab1:
                     """
                     citas = db.fetch_all(query)
                 else:
-                    citas = db.obtener_citas_por_estado(filter_estado)
+                    query = """
+                        SELECT c.*, m.nombre as mascota_nombre, e.nombre as empleado_nombre
+                        FROM citas c
+                        LEFT JOIN mascotas m ON c.id_mascota = m.id_mascota
+                        LEFT JOIN empleados e ON c.id_empleado = e.id_empleado
+                        WHERE c.estado = %s
+                        ORDER BY c.fecha DESC, c.hora DESC
+                    """
+                    citas = db.fetch_all(query, (filter_estado,))
             else:
                 citas = []
             
