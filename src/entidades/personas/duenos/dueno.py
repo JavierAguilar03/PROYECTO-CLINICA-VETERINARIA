@@ -110,7 +110,7 @@ class Dueno(Persona):
         """Guarda el dueño en la base de datos."""
         try:
             fecha_nac_str = self.fecha_nacimiento.strftime('%Y-%m-%d')
-            db.insertar_dueno(self.id_dueno, self.nombre, self.dni, self.telefono,
+            db.insertar_dueno(self.nombre, self.dni, self.telefono,
                             self.email, fecha_nac_str, self.direccion)
             logger.info(f"Dueño {self.nombre} (ID: {self.id_dueno}) guardado en base de datos")
         except Exception as e:

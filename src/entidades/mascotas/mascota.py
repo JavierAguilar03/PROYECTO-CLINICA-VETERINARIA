@@ -97,7 +97,7 @@ class Mascota:
         """Guarda la mascota en la base de datos."""
         try:
             fecha_nac_str = self.fecha_nacimiento.strftime('%Y-%m-%d')
-            db.insertar_mascota(self.id_mascota, self.nombre, self.especie, self.raza,
+            db.insertar_mascota(self.nombre, self.especie, self.raza,
                               fecha_nac_str, self.peso, self.sexo, self.dueno.id_dueno)
             logger.info(f"Mascota {self.nombre} (ID: {self.id_mascota}) guardada en base de datos")
         except Exception as e:

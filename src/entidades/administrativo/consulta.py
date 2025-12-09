@@ -86,7 +86,7 @@ class Consulta:
     def save(self, db):
         """Guarda la consulta en la base de datos."""
         try:
-            db.insertar_consulta(self.id_consulta, self.id_cita, self.id_veterinario,
+            db.insertar_consulta(self.id_cita,
                                self.diagnostico, self.tratamiento, self.observaciones)
             logger.info(f"Consulta {self.id_consulta} guardada en base de datos")
         except Exception as e:

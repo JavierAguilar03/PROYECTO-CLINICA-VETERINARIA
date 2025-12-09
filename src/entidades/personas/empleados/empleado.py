@@ -125,7 +125,7 @@ class Empleado(Persona, ABC):
         """Guarda el empleado en la base de datos."""
         try:
             fecha_nac_str = self.fecha_nacimiento.strftime('%Y-%m-%d')
-            db.insertar_empleado(self.id_empleado, self.nombre, self.dni, self.telefono,
+            db.insertar_empleado(self.nombre, self.dni, self.telefono,
                                self.email, fecha_nac_str, self.salario, self.tipo_empleado,
                                self._credenciales.get('usuario'), 
                                self._credenciales.get('contraseña'))

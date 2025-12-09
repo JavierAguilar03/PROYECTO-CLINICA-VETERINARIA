@@ -357,7 +357,7 @@ with tab2:
                                 fecha_nac_str = nueva_mascota_fecha_nac.strftime("%Y-%m-%d")
                                 id_mascota_nueva = db.insertar_mascota(
                                     nueva_mascota_nombre, nueva_mascota_especie, nueva_mascota_raza,
-                                    nueva_mascota_peso, nueva_mascota_sexo, fecha_nac_str, id_dueno_seleccionado
+                                    fecha_nac_str, nueva_mascota_peso, nueva_mascota_sexo, id_dueno_seleccionado
                                 )
                                 db.disconnect()
                                 

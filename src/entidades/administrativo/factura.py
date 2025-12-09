@@ -230,8 +230,8 @@ class Factura:
         """Guarda la factura en la base de datos."""
         try:
             fecha_str = self.fecha.strftime('%Y-%m-%d') if self.fecha else None
-            db.insertar_factura(self.id_factura, self.id_consulta, fecha_str, 
-                              self.total, self.metodo_pago)
+            db.insertar_factura(self.id_consulta, self.total, 
+                              self.metodo_pago, fecha_str)
             logger.info(f"Factura {self.id_factura} guardada en base de datos")
         except Exception as e:
             logger.error(f"Error al guardar Factura {self.id_factura}: {e}")
