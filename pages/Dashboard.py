@@ -194,19 +194,19 @@ try:
                 df_ingresos = pd.DataFrame(ingresos_data)
                 # Asegurar que ingresos es numérico
                 df_ingresos['ingresos'] = pd.to_numeric(df_ingresos['ingresos'], errors='coerce').fillna(0)
-                fig_ingresos = px.bar(
+                fig_ingresos = px.line(
                     df_ingresos,
                     x='mes',
                     y='ingresos',
                     title='Ingresos Mensuales (€)',
-                    color='ingresos',
-                    color_continuous_scale='Greens',
+                    markers=True,
                     labels={'ingresos': 'Ingresos (€)', 'mes': 'Mes'}
                 )
-                # Configurar el eje X para mostrar solo meses
-                fig_ingresos.update_xaxes(
-                    type='category',
-                    categoryorder='category ascending'
+                # Configurar estilo de la línea
+                fig_ingresos.update_traces(
+                    line_color='#28a745',
+                    line_width=3,
+                    marker=dict(size=10, color='#28a745')
                 )
                 fig_ingresos.update_layout(
                     xaxis_title="Mes",
