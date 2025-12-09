@@ -203,6 +203,16 @@ try:
                     color_continuous_scale='Greens',
                     labels={'ingresos': 'Ingresos (€)', 'mes': 'Mes'}
                 )
+                # Configurar el eje X para mostrar solo meses
+                fig_ingresos.update_xaxes(
+                    type='category',
+                    categoryorder='category ascending'
+                )
+                fig_ingresos.update_layout(
+                    xaxis_title="Mes",
+                    yaxis_title="Ingresos (€)",
+                    showlegend=False
+                )
                 st.plotly_chart(fig_ingresos, use_container_width=True)
             else:
                 st.info("No hay datos de ingresos disponibles")
