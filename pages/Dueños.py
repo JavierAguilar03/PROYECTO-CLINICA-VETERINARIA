@@ -111,8 +111,18 @@ with tab3:
                     db.disconnect()
                     
                     if dueno:
-                        st.success("Dueño encontrado")
-                        st.json(dueno)
+                        st.success("✅ Dueño encontrado")
+                        with st.container(border=True):
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                st.markdown(f"**👤 ID:** {dueno['id_dueno']}")
+                                st.markdown(f"**📛 Nombre:** {dueno['nombre']}")
+                                st.markdown(f"**🆔 DNI:** {dueno['dni']}")
+                                st.markdown(f"**📞 Teléfono:** {dueno['telefono']}")
+                            with col2:
+                                st.markdown(f"**📧 Email:** {dueno['email']}")
+                                st.markdown(f"**🎂 Fecha Nacimiento:** {dueno.get('fecha_nacimiento', 'N/A')}")
+                                st.markdown(f"**🏠 Dirección:** {dueno.get('direccion', 'N/A')}")
                     else:
                         st.warning("No se encontró el dueño")
             except Exception as e:

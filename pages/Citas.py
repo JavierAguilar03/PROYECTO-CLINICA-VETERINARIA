@@ -421,19 +421,25 @@ with tab2:
         
         else:  # Nueva Mascota
             st.markdown("#### Registrar Nueva Mascota")
+            # Verificar si ya se registró una mascota
+            mascota_ya_registrada = 'mascota_registrada' in st.session_state
+            
+            if mascota_ya_registrada:
+                st.info("✅ Mascota ya registrada. Complete los detalles de la cita abajo.")
+            
             with st.form("form_nueva_mascota"):
                 col_m1, col_m2 = st.columns(2)
                 with col_m1:
-                    nueva_mascota_nombre = st.text_input("Nombre*", key="nueva_mascota_nombre")
-                    nueva_mascota_especie = st.text_input("Especie*", key="nueva_mascota_especie", placeholder="Perro, Gato, etc.")
-                    nueva_mascota_raza = st.text_input("Raza*", key="nueva_mascota_raza")
+                    nueva_mascota_nombre = st.text_input("Nombre*", key="nueva_mascota_nombre", disabled=mascota_ya_registrada)
+                    nueva_mascota_especie = st.text_input("Especie*", key="nueva_mascota_especie", placeholder="Perro, Gato, etc.", disabled=mascota_ya_registrada)
+                    nueva_mascota_raza = st.text_input("Raza*", key="nueva_mascota_raza", disabled=mascota_ya_registrada)
                 with col_m2:
-                    nueva_mascota_peso = st.number_input("Peso (kg)*", min_value=0.1, max_value=500000.0, step=0.1, key="nueva_mascota_peso")
-                    nueva_mascota_sexo = st.selectbox("Sexo*", ["Macho", "Hembra"], key="nueva_mascota_sexo")
+                    nueva_mascota_peso = st.number_input("Peso (kg)*", min_value=0.1, max_value=500000.0, step=0.1, key="nueva_mascota_peso", disabled=mascota_ya_registrada)
+                    nueva_mascota_sexo = st.selectbox("Sexo*", ["Macho", "Hembra"], key="nueva_mascota_sexo", disabled=mascota_ya_registrada)
                     nueva_mascota_fecha_nac = st.date_input("Fecha de Nacimiento*", key="nueva_mascota_fecha_nac",
-                                                            min_value=date(1900, 1, 1), max_value=date.today())
+                                                            min_value=date(1900, 1, 1), max_value=date.today(), disabled=mascota_ya_registrada)
                 
-                submit_mascota = st.form_submit_button("➕ Registrar Mascota", use_container_width=True)
+                submit_mascota = st.form_submit_button("➕ Registrar Mascota", use_container_width=True, disabled=mascota_ya_registrada)
                 
                 if submit_mascota:
                     if nueva_mascota_nombre and nueva_mascota_especie and nueva_mascota_raza:
@@ -554,12 +560,34 @@ with tab3:
             try:
                 db = init_db()
                 if db.connect():
-                    cita = db.obtener_cita(id_buscar)
+                    # Query con JOINs para obtener nombres
+                    query = """
+                        SELECT c.*, m.nombre as mascota_nombre, m.especie, 
+                               e.nombre as veterinario_nombre, d.nombre as dueno_nombre
+                        FROM citas c
+                        LEFT JOIN mascotas m ON c.id_mascota = m.id_mascota
+                        LEFT JOIN empleados e ON c.id_empleado = e.id_empleado
+                        LEFT JOIN duenos d ON m.id_dueno = d.id_dueno
+                        WHERE c.id_cita = %s
+                    """
+                    cita = db.fetch_one(query, (id_buscar,))
                     db.disconnect()
                     
                     if cita:
-                        st.success("Cita encontrada")
-                        st.json(cita)
+                        st.success("✅ Cita encontrada")
+                        with st.container(border=True):
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                st.markdown(f"**📋 ID Cita:** {cita['id_cita']}")
+                                st.markdown(f"**📅 Fecha:** {cita['fecha']}")
+                                st.markdown(f"**🕐 Hora:** {cita['hora']}")
+                                st.markdown(f"**📊 Estado:** {cita['estado']}")
+                            with col2:
+                                st.markdown(f"**🐾 Mascota:** {cita.get('mascota_nombre', 'N/A')} ({cita.get('especie', 'N/A')})")
+                                st.markdown(f"**👤 Dueño:** {cita.get('dueno_nombre', 'N/A')}")
+                                st.markdown(f"**👨‍⚕️ Veterinario:** {cita.get('veterinario_nombre', 'N/A')}")
+                            st.markdown("---")
+                            st.markdown(f"**📝 Motivo:** {cita['motivo']}")
                     else:
                         st.warning("No se encontró la cita")
             except Exception as e:
@@ -571,13 +599,35 @@ with tab3:
             try:
                 db = init_db()
                 if db.connect():
-                    citas = db.obtener_citas_por_mascota(id_mascota_buscar)
+                    # Query con JOINs
+                    query = """
+                        SELECT c.*, m.nombre as mascota_nombre, m.especie,
+                               e.nombre as veterinario_nombre
+                        FROM citas c
+                        LEFT JOIN mascotas m ON c.id_mascota = m.id_mascota
+                        LEFT JOIN empleados e ON c.id_empleado = e.id_empleado
+                        WHERE c.id_mascota = %s
+                        ORDER BY c.fecha DESC, c.hora DESC
+                    """
+                    citas = db.fetch_all(query, (id_mascota_buscar,))
                     db.disconnect()
                     
                     if citas:
-                        st.success(f"Se encontraron {len(citas)} citas")
+                        st.success(f"✅ Se encontraron {len(citas)} citas")
                         for cita in citas:
-                            st.write(f"**Cita #{cita['id_cita']}** - {cita['fecha']} {cita['hora']} - {cita['estado']}")
+                            with st.container(border=True):
+                                col1, col2, col3 = st.columns([1, 2, 1])
+                                with col1:
+                                    st.markdown(f"**📋 Cita #{cita['id_cita']}**")
+                                    st.markdown(f"📅 {cita['fecha']}")
+                                    st.markdown(f"🕐 {cita['hora']}")
+                                with col2:
+                                    st.markdown(f"**🐾 Mascota:** {cita.get('mascota_nombre', 'N/A')}")
+                                    st.markdown(f"**👨‍⚕️ Veterinario:** {cita.get('veterinario_nombre', 'N/A')}")
+                                    st.markdown(f"**📝 Motivo:** {cita['motivo'][:50]}..." if len(cita['motivo']) > 50 else f"**📝 Motivo:** {cita['motivo']}")
+                                with col3:
+                                    estado_emoji = "🟢" if cita['estado'] == 'completada' else "🟡" if cita['estado'] == 'pendiente' else "🔴"
+                                    st.markdown(f"{estado_emoji} **{cita['estado'].upper()}**")
                     else:
                         st.warning("No se encontraron citas para esta mascota")
             except Exception as e:
