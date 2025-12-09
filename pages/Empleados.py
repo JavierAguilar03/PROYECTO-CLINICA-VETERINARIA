@@ -1,6 +1,7 @@
 import streamlit as st
 import sys
 import os
+from datetime import date
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.database_conn.db_conn import DatabaseConnection
@@ -94,7 +95,7 @@ with tab2:
                 telefono = st.text_input("Teléfono*")
                 email = st.text_input("Email*")
             with col2:
-                fecha_nac = st.date_input("Fecha de nacimiento*")
+                fecha_nac = st.date_input("Fecha de nacimiento*", min_value=date(1900, 1, 1), max_value=date.today())
                 salario = st.number_input("Salario*", min_value=0.0, step=100.0)
                 tipo = st.selectbox("Tipo*", ["Veterinario", "Recepcionista", "Enfermero", "Conserje"])
                 usuario = st.text_input("Usuario (opcional)")

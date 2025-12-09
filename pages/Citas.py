@@ -248,7 +248,8 @@ with tab2:
                 nuevo_dueno_telefono = st.text_input("Teléfono*", key="nuevo_dueno_telefono", placeholder="666777888")
             with col_d2:
                 nuevo_dueno_email = st.text_input("Email*", key="nuevo_dueno_email", placeholder="correo@ejemplo.com")
-                nuevo_dueno_fecha_nac = st.date_input("Fecha de Nacimiento*", key="nuevo_dueno_fecha_nac")
+                nuevo_dueno_fecha_nac = st.date_input("Fecha de Nacimiento*", key="nuevo_dueno_fecha_nac", 
+                                                       min_value=date(1900, 1, 1), max_value=date.today())
                 nuevo_dueno_direccion = st.text_input("Dirección", key="nuevo_dueno_direccion")
             
             submit_dueno = st.form_submit_button("➕ Registrar Dueño", use_container_width=True)
@@ -345,7 +346,8 @@ with tab2:
                 with col_m2:
                     nueva_mascota_peso = st.number_input("Peso (kg)*", min_value=0.1, step=0.1, key="nueva_mascota_peso")
                     nueva_mascota_sexo = st.selectbox("Sexo*", ["Macho", "Hembra"], key="nueva_mascota_sexo")
-                    nueva_mascota_fecha_nac = st.date_input("Fecha de Nacimiento*", key="nueva_mascota_fecha_nac")
+                    nueva_mascota_fecha_nac = st.date_input("Fecha de Nacimiento*", key="nueva_mascota_fecha_nac",
+                                                            min_value=date(1900, 1, 1), max_value=date.today())
                 
                 submit_mascota = st.form_submit_button("➕ Registrar Mascota", use_container_width=True)
                 
