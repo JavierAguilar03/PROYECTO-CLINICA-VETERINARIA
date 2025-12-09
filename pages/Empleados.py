@@ -4,7 +4,7 @@ import os
 from datetime import date
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from src.database_conn.db_conn import DatabaseConnection
+from src.utils.db_utils import init_db
 
 st.set_page_config(page_title="Empleados", page_icon="👨‍⚕️", layout="wide")
 
@@ -32,13 +32,6 @@ else:
     # Veterinarios y enfermeros ven todos pero no pueden registrar
     is_limited_view = False
     can_register = False
-
-def init_db():
-    host = os.getenv('DB_HOST', 'localhost')
-    user = os.getenv('DB_USER', 'root')
-    password = os.getenv('DB_PASSWORD', '')
-    database = os.getenv('DB_NAME', 'clinica_veterinaria')
-    return DatabaseConnection(host, user, password, database)
 
 st.title("👨‍⚕️ Gestión de Empleados")
 st.markdown("---")

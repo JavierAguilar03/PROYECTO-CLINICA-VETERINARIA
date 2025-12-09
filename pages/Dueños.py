@@ -5,7 +5,7 @@ import os
 # Añadir el directorio raíz al path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from src.database_conn.db_conn import DatabaseConnection
+from src.utils.db_utils import init_db
 
 st.set_page_config(page_title="Dueños - Clínica Veterinaria", page_icon="👥", layout="wide")
 
@@ -31,16 +31,6 @@ elif user_role in ['veterinario', 'enfermero']:
 else:
     # Recepcionistas tienen acceso completo
     is_owner_view = False
-
-def init_db():
-    """Inicializa la conexión a la base de datos."""
-    host = os.getenv('DB_HOST', 'localhost')
-    user = os.getenv('DB_USER', 'root')
-    password = os.getenv('DB_PASSWORD', '')
-    database = os.getenv('DB_NAME', 'clinica_veterinaria')
-    
-    db = DatabaseConnection(host, user, password, database)
-    return db
 
 st.title("👥 Gestión de Dueños")
 st.markdown("---")

@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 # Añadir el directorio raíz al path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from src.database_conn.db_conn import DatabaseConnection
+from src.utils.db_utils import init_db
 
 st.set_page_config(page_title="Dashboard - Clínica Veterinaria", page_icon="📊", layout="wide")
 
@@ -22,15 +22,6 @@ if 'authenticated' not in st.session_state or not st.session_state.authenticated
 if st.session_state.user_type != 'empleado':
     st.error("🚫 Acceso restringido. El dashboard es solo para empleados.")
     st.stop()
-
-def init_db():
-    """Inicializa la conexión a la base de datos."""
-    host = ""
-    user = ""
-    password = ""
-    database = ""
-    db = DatabaseConnection(host, user, password, database)
-    return db
 
 # Título principal
 st.title("📊 Dashboard - Clínica Veterinaria")

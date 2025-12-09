@@ -4,7 +4,7 @@ import os
 from datetime import date
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from src.database_conn.db_conn import DatabaseConnection
+from src.utils.db_utils import init_db
 
 st.set_page_config(page_title="Consultas", page_icon="🏥", layout="wide")
 
@@ -23,13 +23,6 @@ user_role = st.session_state.user_data.get('tipo_empleado', '').lower()
 if user_role not in ['veterinario', 'enfermero', 'recepcionista']:
     st.error("🚫 Acceso restringido. Los conserjes solo pueden acceder a la sección de Empleados.")
     st.stop()
-
-def init_db():
-    host = os.getenv('DB_HOST', 'localhost')
-    user = os.getenv('DB_USER', 'root')
-    password = os.getenv('DB_PASSWORD', '')
-    database = os.getenv('DB_NAME', 'clinica_veterinaria')
-    return DatabaseConnection(host, user, password, database)
 
 st.title("🏥 Gestión de Consultas")
 st.markdown("---")

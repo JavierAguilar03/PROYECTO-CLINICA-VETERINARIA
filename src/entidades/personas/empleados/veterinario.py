@@ -13,16 +13,3 @@ class Veterinario(Empleado):
         self.especialidad = especialidad
         self.num_colegiado = num_colegiado
         self.horario = horario
-
-    def calcular_salario(self) -> float:
-        """El veterinario recibe un bono del 10% sobre el salario base."""
-        return self.salario * 1.10
-
-    def mostrar_info(self) -> str:
-        base_info = super().mostrar_info()
-        extra = (
-            f"\nEspecialidad: {self.especialidad}\n"
-            f"Número de Colegiado: {self.num_colegiado}\n"
-            f"Horario: {self.horario}"
-        )
-        return base_info + extra
