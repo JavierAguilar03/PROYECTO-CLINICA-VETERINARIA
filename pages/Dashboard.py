@@ -36,7 +36,7 @@ def init_db():
 st.title("📊 Dashboard - Clínica Veterinaria")
 user_name = st.session_state.user_data.get('nombre', 'Usuario')
 user_role = st.session_state.user_data.get('tipo_empleado', 'N/A')
-st.markdown(f"**Bienvenido, {user_name}** ({user_role})")
+st.markdown(f"**Bienvenido/a, {user_name}** ({user_role})")
 st.markdown("---")
 
 # Obtener datos de la base de datos

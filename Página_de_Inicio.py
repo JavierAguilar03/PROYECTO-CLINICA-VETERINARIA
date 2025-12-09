@@ -8,7 +8,7 @@ setup_logging()
 
 # Configuración de la página
 st.set_page_config(
-    page_title="Clínica Veterinaria - Página de Inicio",
+    page_title="Página de Inicio",
     page_icon="🐾",
     layout="wide"
 )
@@ -187,7 +187,7 @@ def main_app():
         user_role = st.session_state.user_data.get('tipo_empleado', '').lower()
         nombre = st.session_state.user_data.get('nombre', 'Usuario')
         
-        st.markdown(f"### 👋 Bienvenido, {nombre}")
+        st.markdown(f"### 👋 Bienvenido/a, {nombre}")
         st.caption(f"Rol: {st.session_state.user_data.get('tipo_empleado', 'N/A')}")
         st.markdown("---")
         
@@ -318,7 +318,7 @@ def main_app():
                 elif user_role == 'conserje':
                     st.subheader("👋 Panel de Conserje")
                     st.info("""
-                    Bienvenido al sistema.
+                    Bienvenido/a al sistema.
                     
                     Puede acceder a su información personal desde la página de **Empleados**.
                     """)
@@ -336,7 +336,7 @@ def main_app():
         
     else:  # Dueño
         nombre = st.session_state.user_data.get('nombre', 'Usuario')
-        st.markdown(f"### 👋 Bienvenido, {nombre}")
+        st.markdown(f"### 👋 Bienvenido/a, {nombre}")
         st.caption("Cliente")
         st.markdown("---")
         

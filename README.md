@@ -98,7 +98,7 @@ $env:DB_NAME = "clinica_veterinaria"
 
 5. **Ejecutar aplicación**
 ```powershell
-streamlit run app.py
+streamlit run Página_de_Inicio.py
 ```
 
 La app se abrirá en `http://localhost:8501`
@@ -107,7 +107,7 @@ La app se abrirá en `http://localhost:8501`
 
 ```
 PROYECTO-CLINICA-VETERINARIA/
-├── app.py                      # Aplicación principal con autenticación
+├── Página_de_Inicio.py         # Aplicación principal con autenticación
 ├── requirements.txt            # Dependencias
 ├── LICENSE                     # Licencia MIT
 ├── README.md                   # Este archivo
