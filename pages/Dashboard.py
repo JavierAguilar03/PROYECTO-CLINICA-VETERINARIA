@@ -175,14 +175,14 @@ try:
                 st.info("No hay datos de citas recientes")
         
         with col_right2:
-            # GRÁFICO 4: Ingresos por mes (últimos 6 meses)
+            # GRÁFICO 4: Ingresos por mes (últimos 12 meses)
             st.subheader("💰 Ingresos por Mes")
             query_ingresos = """
                 SELECT 
                     DATE_FORMAT(DATE(COALESCE(f.fecha, f.created_at)), '%Y-%m') as mes,
                     SUM(CAST(f.total AS DECIMAL(10,2))) as ingresos
                 FROM facturas f
-                WHERE DATE(COALESCE(f.fecha, f.created_at)) >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+                WHERE DATE(COALESCE(f.fecha, f.created_at)) >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
                 GROUP BY DATE_FORMAT(DATE(COALESCE(f.fecha, f.created_at)), '%Y-%m')
                 ORDER BY mes
             """
