@@ -29,7 +29,7 @@ def init_db():
 st.title("🐾 Gestión de Mascotas")
 st.markdown("---")
 
-tab1, tab2 = st.tabs(["📋 Ver Mascotas", "➕ Nueva Mascota"])
+tab1 = st.tabs(["📋 Ver Mascotas"])[0]
 
 with tab1:
     st.subheader("Lista de Mascotas")
@@ -77,44 +77,5 @@ with tab1:
     except Exception as e:
         st.error(f"Error: {str(e)}")
 
-with tab2:
-    st.subheader("Registrar Nueva Mascota")
-    
-    # Solo dueños y recepcionistas pueden registrar mascotas
-    if user_role not in ['dueño', 'recepcionista']:
-        st.warning("⚠️ Solo dueños y recepcionistas pueden registrar nuevas mascotas.")
-    else:
-        with st.form("nueva_mascota"):
-            col1, col2 = st.columns(2)
-            with col1:
-                nombre = st.text_input("Nombre*")
-                especie = st.text_input("Especie*")
-                raza = st.text_input("Raza*")
-            with col2:
-                peso = st.number_input("Peso (kg)*", min_value=0.1, step=0.1)
-                sexo = st.selectbox("Sexo*", ["Macho", "Hembra"])
-                fecha_nac = st.date_input("Fecha de nacimiento*")
-            
-            # Si es dueño, usar su propio ID
-            if user_role == 'dueño':
-                id_dueno = st.session_state.user_data['id_dueno']
-                st.info(f"Registrando mascota para: {st.session_state.user_data.get('nombre', 'Usuario')}")
-            else:
-                id_dueno = st.number_input("ID del Dueño*", min_value=1, step=1)
-            
-            if st.form_submit_button("🐾 Registrar Mascota", use_container_width=True):
-                if nombre and especie and raza and peso and id_dueno:
-                    try:
-                        db = init_db()
-                        if db.connect():
-                            fecha_str = fecha_nac.strftime("%Y-%m-%d")
-                            id_mascota = db.insertar_mascota(nombre, especie, raza, fecha_str, peso, sexo, id_dueno)
-                            db.disconnect()
-                            if id_mascota:
-                                st.success(f"✅ Mascota registrada (ID: {id_mascota})")
-                            else:
-                                st.error("Error al registrar")
-                    except Exception as e:
-                        st.error(f"Error: {str(e)}")
-                else:
-                    st.warning("⚠️ Complete todos los campos")
+st.markdown("---")
+st.info("ℹ️ **Nota**: Para registrar nuevas mascotas, utilice la página de **Citas** → **Nueva Cita**. El sistema le guiará para registrar dueños y mascotas durante el proceso de creación de citas.")

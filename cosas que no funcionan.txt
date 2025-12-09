@@ -1,0 +1,6 @@
+Queremos mejorar el funcionamiento de nuestro gestor de la clinica veterinaria.
+
+Lo primero que queremos es que ya no haya funcionalidad de crear facturas, mascotas ni dueños nuevos desde sus respetivas paginas.
+Queremos que desde la pagina de citas, al crear una nueva cita te de la opcicon de elegir el dueño de la mascota. Si es un dueño nuevo, te da la opcion de elegir eso y registrar un dueño y una mascota nueva.
+Si el dueño existe ya, te da la opcion de o una mascota existente, de la cual ya se conocen los datos, o una mascota nueva de la cual se pueden rellenar los datos ahi. 
+Queremos que el dueño se pueda identificar por el DNI y su nombre.

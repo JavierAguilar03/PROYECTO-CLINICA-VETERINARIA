@@ -46,7 +46,7 @@ st.title("👥 Gestión de Dueños")
 st.markdown("---")
 
 # Tabs
-tab1, tab2, tab3 = st.tabs(["📋 Ver Dueños", "➕ Nuevo Dueño", "🔍 Buscar"])
+tab1, tab3 = st.tabs(["📋 Ver Dueños", "🔍 Buscar"])
 
 # TAB 1: Ver Dueños
 with tab1:
@@ -90,48 +90,12 @@ with tab1:
     
     except Exception as e:
         st.error(f"Error al cargar dueños: {str(e)}")
+    
+    if not is_owner_view:
+        st.markdown("---")
+        st.info("ℹ️ **Nota**: Para registrar nuevos dueños, utilice la página de **Citas** → **Nueva Cita**. El sistema le guiará para registrar dueños durante el proceso de creación de citas.")
 
-# TAB 2: Nuevo Dueño
-with tab2:
-    if is_owner_view:
-        st.info("ℹ️ Los dueños no pueden registrar nuevos dueños. Contacte con recepción.")
-    else:
-        st.subheader("Registrar Nuevo Dueño")
-        
-        with st.form("nuevo_dueno"):
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                nombre = st.text_input("Nombre completo*")
-                dni = st.text_input("DNI*")
-                telefono = st.text_input("Teléfono*")
-            
-            with col2:
-                email = st.text_input("Email*")
-                fecha_nacimiento = st.date_input("Fecha de nacimiento*")
-                direccion = st.text_area("Dirección*", height=100)
-            
-            submitted = st.form_submit_button("👤 Registrar Dueño", use_container_width=True)
-            
-            if submitted:
-                if nombre and dni and telefono and email and fecha_nacimiento and direccion:
-                    try:
-                        db = init_db()
-                        if db.connect():
-                            fecha_str = fecha_nacimiento.strftime("%Y-%m-%d")
-                            id_dueno = db.insertar_dueno(nombre, dni, telefono, email, fecha_str, direccion)
-                            db.disconnect()
-                            
-                            if id_dueno:
-                                st.success(f"✅ Dueño registrado exitosamente (ID: {id_dueno})")
-                            else:
-                                st.error("Error al registrar el dueño")
-                    except Exception as e:
-                        st.error(f"Error: {str(e)}")
-                else:
-                    st.warning("⚠️ Por favor complete todos los campos obligatorios (*)")
-
-# TAB 3: Buscar
+# TAB 2: Buscar
 with tab3:
     if is_owner_view:
         st.info("ℹ️ Puede ver su información en la pestaña 'Ver Dueños'.")

@@ -33,7 +33,7 @@ def init_db():
 st.title("💰 Gestión de Facturas")
 st.markdown("---")
 
-tab1, tab2 = st.tabs(["📋 Ver Facturas", "➕ Nueva Factura"])
+tab1 = st.tabs(["📋 Ver Facturas"])[0]
 
 with tab1:
     st.subheader("Lista de Facturas")
@@ -57,28 +57,6 @@ with tab1:
                 st.warning("No hay facturas registradas")
     except Exception as e:
         st.error(f"Error: {str(e)}")
-
-with tab2:
-    st.subheader("Generar Nueva Factura")
-    with st.form("nueva_factura"):
-        id_consulta = st.number_input("ID de la Consulta*", min_value=1, step=1)
-        total = st.number_input("Total (€)*", min_value=0.0, step=0.01)
-        metodo_pago = st.selectbox("Método de pago", ["efectivo", "tarjeta", "transferencia", "paypal"])
-        fecha = st.date_input("Fecha")
-        
-        if st.form_submit_button("💰 Generar Factura", use_container_width=True):
-            if id_consulta and total:
-                try:
-                    db = init_db()
-                    if db.connect():
-                        fecha_str = fecha.strftime("%Y-%m-%d")
-                        id_factura = db.insertar_factura(id_consulta, total, metodo_pago, fecha_str)
-                        db.disconnect()
-                        if id_factura:
-                            st.success(f"✅ Factura generada (ID: {id_factura})")
-                        else:
-                            st.error("Error al generar factura")
-                except Exception as e:
-                    st.error(f"Error: {str(e)}")
-            else:
-                st.warning("⚠️ Complete los campos obligatorios")
+    
+    st.markdown("---")
+    st.info("ℹ️ **Nota**: Las facturas se generan automáticamente desde la página de **Consultas** después de completar una consulta médica.")
