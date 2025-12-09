@@ -175,16 +175,16 @@ try:
                 st.info("No hay datos de citas recientes")
         
         with col_right2:
-            # GRÁFICO 4: Ingresos por mes (últimos 12 meses)
-            st.subheader("💰 Ingresos por Mes")
+            # GRÁFICO 4: Ingresos por día (últimos 12 meses)
+            st.subheader("💰 Ingresos por Día")
             query_ingresos = """
                 SELECT 
-                    DATE_FORMAT(DATE(COALESCE(f.fecha, f.created_at)), '%Y-%m') as mes,
+                    DATE(COALESCE(f.fecha, f.created_at)) as dia,
                     SUM(CAST(f.total AS DECIMAL(10,2))) as ingresos
                 FROM facturas f
                 WHERE DATE(COALESCE(f.fecha, f.created_at)) >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
-                GROUP BY DATE_FORMAT(DATE(COALESCE(f.fecha, f.created_at)), '%Y-%m')
-                ORDER BY mes
+                GROUP BY DATE(COALESCE(f.fecha, f.created_at))
+                ORDER BY dia
             """
             ingresos_data = db.fetch_all(query_ingresos)
             
@@ -192,22 +192,19 @@ try:
                 df_ingresos = pd.DataFrame(ingresos_data)
                 # Asegurar que ingresos es numérico
                 df_ingresos['ingresos'] = pd.to_numeric(df_ingresos['ingresos'], errors='coerce').fillna(0)
-                fig_ingresos = px.line(
+                # Convertir dia a string para mejor visualización
+                df_ingresos['dia'] = pd.to_datetime(df_ingresos['dia']).dt.strftime('%Y-%m-%d')
+                fig_ingresos = px.bar(
                     df_ingresos,
-                    x='mes',
+                    x='dia',
                     y='ingresos',
-                    title='Ingresos Mensuales (€)',
-                    markers=True,
-                    labels={'ingresos': 'Ingresos (€)', 'mes': 'Mes'}
-                )
-                # Configurar estilo de la línea
-                fig_ingresos.update_traces(
-                    line_color='#28a745',
-                    line_width=3,
-                    marker=dict(size=10, color='#28a745')
+                    title='Ingresos Diarios (€) - Últimos 12 Meses',
+                    color='ingresos',
+                    color_continuous_scale='Greens',
+                    labels={'ingresos': 'Ingresos (€)', 'dia': 'Día'}
                 )
                 fig_ingresos.update_layout(
-                    xaxis_title="Mes",
+                    xaxis_title="Día",
                     yaxis_title="Ingresos (€)",
                     showlegend=False
                 )
