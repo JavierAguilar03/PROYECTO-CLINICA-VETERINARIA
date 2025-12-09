@@ -180,8 +180,10 @@ try:
             query_ingresos = """
                 SELECT 
                     DATE_FORMAT(f.fecha, '%Y-%m') as mes,
-                    SUM(f.total) as ingresos
+                    SUM(CAST(f.total AS DECIMAL(10,2))) as ingresos
                 FROM facturas f
+                INNER JOIN consultas co ON f.id_consulta = co.id_consulta
+                INNER JOIN citas ci ON co.id_cita = ci.id_cita
                 WHERE f.fecha >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
                 GROUP BY DATE_FORMAT(f.fecha, '%Y-%m')
                 ORDER BY mes
@@ -190,6 +192,8 @@ try:
             
             if ingresos_data:
                 df_ingresos = pd.DataFrame(ingresos_data)
+                # Asegurar que ingresos es numérico
+                df_ingresos['ingresos'] = pd.to_numeric(df_ingresos['ingresos'], errors='coerce').fillna(0)
                 fig_ingresos = px.bar(
                     df_ingresos,
                     x='mes',
@@ -246,19 +250,20 @@ try:
             query_edad_especie = """
                 SELECT 
                     especie,
-                    AVG(TIMESTAMPDIFF(YEAR, fecha_nacimiento, CURDATE())) as edad_promedio
+                    ROUND(AVG(TIMESTAMPDIFF(YEAR, fecha_nacimiento, CURDATE())), 1) as edad_promedio
                 FROM mascotas
                 WHERE fecha_nacimiento IS NOT NULL
                 GROUP BY especie
-                HAVING edad_promedio > 0
+                HAVING AVG(TIMESTAMPDIFF(YEAR, fecha_nacimiento, CURDATE())) > 0
                 ORDER BY edad_promedio DESC
                 LIMIT 5
             """
             edad_especie_data = db.fetch_all(query_edad_especie)
             
-            if edad_especie_data:
+            if edad_especie_data and len(edad_especie_data) > 0:
                 df_edad_especie = pd.DataFrame(edad_especie_data)
-                df_edad_especie['edad_promedio'] = df_edad_especie['edad_promedio'].round(1)
+                # Asegurar que edad_promedio es numérico
+                df_edad_especie['edad_promedio'] = pd.to_numeric(df_edad_especie['edad_promedio'], errors='coerce').fillna(0)
                 
                 fig_edad = px.bar(
                     df_edad_especie,
@@ -352,12 +357,12 @@ try:
         with col_stat2:
             # Promedio de ingresos por consulta
             query_promedio = """
-                SELECT AVG(total) as promedio
+                SELECT ROUND(AVG(CAST(total AS DECIMAL(10,2))), 2) as promedio
                 FROM facturas
                 WHERE total > 0
             """
             promedio_data = db.fetch_one(query_promedio)
-            promedio_ingreso = promedio_data['promedio'] if promedio_data['promedio'] else 0
+            promedio_ingreso = float(promedio_data['promedio']) if promedio_data and promedio_data['promedio'] is not None else 0.0
             st.metric(
                 label="💵 Ingreso Promedio",
                 value=f"{promedio_ingreso:.2f} €"
