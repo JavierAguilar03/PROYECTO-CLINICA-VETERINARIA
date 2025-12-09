@@ -182,8 +182,6 @@ try:
                     DATE_FORMAT(DATE(COALESCE(f.fecha, f.created_at)), '%Y-%m') as mes,
                     SUM(CAST(f.total AS DECIMAL(10,2))) as ingresos
                 FROM facturas f
-                INNER JOIN consultas co ON f.id_consulta = co.id_consulta
-                INNER JOIN citas ci ON co.id_cita = ci.id_cita
                 WHERE DATE(COALESCE(f.fecha, f.created_at)) >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
                 GROUP BY DATE_FORMAT(DATE(COALESCE(f.fecha, f.created_at)), '%Y-%m')
                 ORDER BY mes
