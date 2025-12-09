@@ -33,8 +33,77 @@ def init_db():
     db = DatabaseConnection(host, user, password, database)
     return db
 
+@st.dialog("🏥 Completar Cita y Registrar Consulta")
+def modal_completar_cita(cita):
+    """Modal para completar una cita y registrar consulta con factura."""
+    st.write(f"**Cita #{cita['id_cita']}**")
+    st.write(f"**Mascota:** {cita.get('mascota_nombre', 'N/A')}")
+    st.write(f"**Motivo:** {cita['motivo']}")
+    st.write(f"**Fecha:** {cita['fecha']} {cita['hora']}")
+    st.markdown("---")
+    
+    with st.form("form_completar_cita"):
+        st.subheader("📋 Información de Consulta")
+        diagnostico = st.text_area("Diagnóstico*", height=120, placeholder="Describa el diagnóstico de la consulta...")
+        tratamiento = st.text_area("Tratamiento*", height=120, placeholder="Describa el tratamiento recomendado...")
+        observaciones = st.text_area("Observaciones", height=80, placeholder="Observaciones adicionales (opcional)")
+        
+        st.markdown("---")
+        st.subheader("💰 Información de Factura")
+        col_f1, col_f2 = st.columns(2)
+        with col_f1:
+            total_factura = st.number_input("Total a Cobrar (€)*", min_value=0.0, step=5.0, value=50.0)
+        with col_f2:
+            metodo_pago = st.selectbox("Método de Pago*", ["efectivo", "tarjeta", "transferencia", "paypal"])
+        
+        submitted = st.form_submit_button("✅ Completar Cita y Generar Factura", use_container_width=True)
+        
+        if submitted:
+            if diagnostico and tratamiento and total_factura > 0:
+                try:
+                    db = init_db()
+                    if db.connect():
+                        # 1. Actualizar estado de la cita a completada
+                        db.actualizar_cita(cita['id_cita'], estado="completada")
+                        
+                        # 2. Registrar la consulta
+                        id_consulta = db.insertar_consulta(cita['id_cita'], diagnostico, tratamiento, observaciones)
+                        
+                        if id_consulta:
+                            # 3. Generar factura automáticamente
+                            fecha_hoy = date.today().strftime("%Y-%m-%d")
+                            id_factura = db.insertar_factura(id_consulta, total_factura, metodo_pago, fecha_hoy)
+                            
+                            db.disconnect()
+                            
+                            if id_factura:
+                                st.success(f"""✅ **CITA COMPLETADA EXITOSAMENTE**
+                                
+                                - **Consulta ID:** {id_consulta}
+                                - **Factura ID:** {id_factura}
+                                - **Total:** {total_factura}€
+                                - **Método de Pago:** {metodo_pago}
+                                """)
+                                st.balloons()
+                                st.session_state.cita_completada = True
+                                st.rerun()
+                            else:
+                                st.error("⚠️ Consulta registrada pero error al generar factura")
+                        else:
+                            st.error("Error al registrar la consulta")
+                            db.disconnect()
+                except Exception as e:
+                    st.error(f"Error: {str(e)}")
+            else:
+                st.warning("⚠️ Complete los campos obligatorios y asegúrese de que el total sea mayor a 0")
+
 st.title("📅 Gestión de Citas")
 st.markdown("---")
+
+# Verificar si se completó una cita y limpiar el flag
+if 'cita_completada' in st.session_state and st.session_state.cita_completada:
+    st.success("✅ Cita completada exitosamente. Consulta y factura registradas.")
+    del st.session_state.cita_completada
 
 # Inicializar el índice del tab activo
 if 'active_tab' not in st.session_state:
@@ -160,17 +229,7 @@ with tab1:
                             col_btn1, col_btn2, col_btn3 = st.columns(3)
                             with col_btn1:
                                 if st.button("✅ Completar", key=f"complete_{cita['id_cita']}"):
-                                    # Guardar datos de la cita en session_state para crear consulta
-                                    st.session_state.cita_a_completar = {
-                                        'id_cita': cita['id_cita'],
-                                        'mascota': cita.get('mascota_nombre', 'N/A'),
-                                        'empleado': cita.get('empleado_nombre', 'N/A'),
-                                        'motivo': cita['motivo'],
-                                        'fecha': cita['fecha'],
-                                        'hora': cita['hora']
-                                    }
-                                    # Redirigir a la página de consultas
-                                    st.switch_page("pages/Consultas.py")
+                                    modal_completar_cita(cita)
                             
                             with col_btn2:
                                 if st.button("❌ Cancelar", key=f"cancel_{cita['id_cita']}"):
