@@ -8,7 +8,7 @@ setup_logging()
 
 # Configuración de la página
 st.set_page_config(
-    page_title="Clínica Veterinaria - Sistema de Gestión",
+    page_title="Clínica Veterinaria - Página de Inicio",
     page_icon="🐾",
     layout="wide"
 )
@@ -121,13 +121,9 @@ def login_page():
         st.caption("💡 **Nota**: Si es un nuevo dueño, contacte con la recepción para registrarse.")
 
 def main_app():
-    """Aplicación principal después del login."""
+    """Aplicación principal después del login - Dashboard personalizado."""
     
-    # Redirigir a empleados al Dashboard automáticamente
-    if st.session_state.user_type == "empleado":
-        st.switch_page("pages/Dashboard.py")
-    
-    # Sidebar con información del usuario
+    # Sidebar con información del usuario y botón de logout
     with st.sidebar:
         st.title("👤 Usuario")
         
@@ -138,7 +134,10 @@ def main_app():
         else:
             st.info(f"**Dueño**: {st.session_state.user_data.get('nombre', 'Usuario')}")
         
-        if st.button("🚪 Cerrar Sesión", use_container_width=True):
+        st.markdown("---")
+        
+        # Botón de logout prominente
+        if st.button("🚪 Cerrar Sesión", use_container_width=True, type="primary"):
             st.session_state.authenticated = False
             st.session_state.user_type = None
             st.session_state.user_data = None
@@ -151,7 +150,8 @@ def main_app():
         if st.session_state.user_type == "empleado":
             user_role = st.session_state.user_data.get('tipo_empleado', '').lower()
             
-            st.caption("• 📊 Dashboard (vista general)")
+            st.caption("• 🏠 Página de Inicio")
+            st.caption("• 📊 Dashboard (estadísticas)")
             if user_role == 'conserje':
                 st.caption("• 👨‍⚕️ Empleados (solo tu info)")
             elif user_role == 'veterinario':
@@ -179,91 +179,232 @@ def main_app():
         st.markdown("---")
         st.caption("Sistema de Gestión v1.0")
     
-    # Contenido principal
-    st.title("🐾 Sistema de Gestión de Clínica Veterinaria")
+    # Contenido principal - Dashboard personalizado
+    st.title("🏠 Página de Inicio")
+    st.markdown("---")
     
     if st.session_state.user_type == "empleado":
         user_role = st.session_state.user_data.get('tipo_empleado', '').lower()
+        nombre = st.session_state.user_data.get('nombre', 'Usuario')
         
-        st.markdown(f"""
-        ### Panel de Empleado - {st.session_state.user_data.get('tipo_empleado', 'N/A')}
+        st.markdown(f"### 👋 Bienvenido, {nombre}")
+        st.caption(f"Rol: {st.session_state.user_data.get('tipo_empleado', 'N/A')}")
+        st.markdown("---")
         
-        Bienvenido al sistema de gestión.
-        """)
+        # Dashboard personalizado según rol
+        try:
+            db = init_db_connection()
+            if db.connect():
+                
+                if user_role == 'veterinario':
+                    st.subheader("📊 Tu Panel de Veterinario")
+                    
+                    col1, col2, col3 = st.columns(3)
+                    id_empleado = st.session_state.user_data['id_empleado']
+                    
+                    # Métricas del veterinario
+                    with col1:
+                        citas_hoy = db.fetch_all("""
+                            SELECT COUNT(*) as total FROM citas 
+                            WHERE id_empleado = %s AND fecha = CURDATE()
+                        """, (id_empleado,))
+                        total_hoy = citas_hoy[0]['total'] if citas_hoy else 0
+                        st.metric("Citas Hoy", total_hoy)
+                    
+                    with col2:
+                        citas_pendientes = db.fetch_all("""
+                            SELECT COUNT(*) as total FROM citas 
+                            WHERE id_empleado = %s AND estado = 'pendiente'
+                        """, (id_empleado,))
+                        total_pendientes = citas_pendientes[0]['total'] if citas_pendientes else 0
+                        st.metric("Citas Pendientes", total_pendientes)
+                    
+                    with col3:
+                        consultas = db.fetch_all("""
+                            SELECT COUNT(*) as total FROM consultas co
+                            INNER JOIN citas ci ON co.id_cita = ci.id_cita
+                            WHERE ci.id_empleado = %s
+                        """, (id_empleado,))
+                        total_consultas = consultas[0]['total'] if consultas else 0
+                        st.metric("Consultas Realizadas", total_consultas)
+                    
+                    st.markdown("---")
+                    st.subheader("📅 Próximas Citas")
+                    proximas = db.fetch_all("""
+                        SELECT c.*, m.nombre as mascota FROM citas c
+                        LEFT JOIN mascotas m ON c.id_mascota = m.id_mascota
+                        WHERE c.id_empleado = %s AND c.estado = 'pendiente'
+                        ORDER BY c.fecha, c.hora LIMIT 5
+                    """, (id_empleado,))
+                    
+                    if proximas:
+                        for cita in proximas:
+                            st.info(f"🗓️ {cita['fecha']} a las {cita['hora']} - {cita.get('mascota', 'N/A')} - {cita['motivo']}")
+                    else:
+                        st.success("✅ No tienes citas pendientes")
+                
+                elif user_role == 'recepcionista':
+                    st.subheader("📊 Panel de Recepción")
+                    
+                    col1, col2, col3, col4 = st.columns(4)
+                    
+                    with col1:
+                        citas_hoy = db.fetch_all("SELECT COUNT(*) as total FROM citas WHERE fecha = CURDATE()")
+                        st.metric("Citas Hoy", citas_hoy[0]['total'] if citas_hoy else 0)
+                    
+                    with col2:
+                        citas_pendientes = db.fetch_all("SELECT COUNT(*) as total FROM citas WHERE estado = 'pendiente'")
+                        st.metric("Pendientes", citas_pendientes[0]['total'] if citas_pendientes else 0)
+                    
+                    with col3:
+                        facturas_hoy = db.fetch_all("SELECT COUNT(*) as total FROM facturas WHERE fecha = CURDATE()")
+                        st.metric("Facturas Hoy", facturas_hoy[0]['total'] if facturas_hoy else 0)
+                    
+                    with col4:
+                        ingresos_hoy = db.fetch_all("SELECT SUM(total) as total FROM facturas WHERE fecha = CURDATE()")
+                        ingresos = ingresos_hoy[0]['total'] if ingresos_hoy and ingresos_hoy[0]['total'] else 0
+                        st.metric("Ingresos Hoy", f"{ingresos:.2f}€")
+                    
+                    st.markdown("---")
+                    st.subheader("📅 Citas de Hoy")
+                    citas_hoy_list = db.fetch_all("""
+                        SELECT c.*, m.nombre as mascota, e.nombre as veterinario FROM citas c
+                        LEFT JOIN mascotas m ON c.id_mascota = m.id_mascota
+                        LEFT JOIN empleados e ON c.id_empleado = e.id_empleado
+                        WHERE c.fecha = CURDATE()
+                        ORDER BY c.hora
+                    """)
+                    
+                    if citas_hoy_list:
+                        for cita in citas_hoy_list:
+                            estado_color = "🟢" if cita['estado'] == 'completada' else "🟡" if cita['estado'] == 'pendiente' else "🔴"
+                            st.info(f"{estado_color} {cita['hora']} - {cita.get('mascota', 'N/A')} - Dr. {cita.get('veterinario', 'N/A')} - {cita['estado']}")
+                    else:
+                        st.info("No hay citas programadas para hoy")
+                
+                elif user_role == 'enfermero':
+                    st.subheader("📊 Panel de Enfermería")
+                    
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        citas_hoy = db.fetch_all("SELECT COUNT(*) as total FROM citas WHERE fecha = CURDATE()")
+                        st.metric("Citas Hoy", citas_hoy[0]['total'] if citas_hoy else 0)
+                    
+                    with col2:
+                        mascotas = db.fetch_all("SELECT COUNT(*) as total FROM mascotas")
+                        st.metric("Total Mascotas", mascotas[0]['total'] if mascotas else 0)
+                    
+                    with col3:
+                        consultas = db.fetch_all("SELECT COUNT(*) as total FROM consultas")
+                        st.metric("Consultas Totales", consultas[0]['total'] if consultas else 0)
+                    
+                    st.markdown("---")
+                    st.subheader("📅 Citas Pendientes")
+                    pendientes = db.fetch_all("""
+                        SELECT c.*, m.nombre as mascota, e.nombre as veterinario FROM citas c
+                        LEFT JOIN mascotas m ON c.id_mascota = m.id_mascota
+                        LEFT JOIN empleados e ON c.id_empleado = e.id_empleado
+                        WHERE c.estado = 'pendiente'
+                        ORDER BY c.fecha, c.hora LIMIT 10
+                    """)
+                    
+                    if pendientes:
+                        for cita in pendientes:
+                            st.info(f"🗓️ {cita['fecha']} {cita['hora']} - {cita.get('mascota', 'N/A')} - Dr. {cita.get('veterinario', 'N/A')}")
+                    else:
+                        st.success("✅ No hay citas pendientes")
+                
+                elif user_role == 'conserje':
+                    st.subheader("👋 Panel de Conserje")
+                    st.info("""
+                    Bienvenido al sistema.
+                    
+                    Puede acceder a su información personal desde la página de **Empleados**.
+                    """)
+                    
+                    id_empleado = st.session_state.user_data['id_empleado']
+                    salario = st.session_state.user_data.get('salario', 0)
+                    st.metric("Tu Salario", f"{salario}€")
+                
+                db.disconnect()
+        except Exception as e:
+            st.error(f"Error al cargar dashboard: {str(e)}")
         
-        # Mostrar accesos según rol
-        if user_role == 'conserje':
-            st.info("""
-            **Acceso Limitado - Conserje**
-            
-            Como conserje, solo tienes acceso a:
-            - 👨‍⚕️ **Empleados**: Ver tu información personal y salario
-            
-            👈 Accede desde el menú lateral.
-            """)
-            
-        elif user_role == 'veterinario':
-            st.markdown("""
-            **Accesos disponibles:**
-            
-            - 📋 **Citas**: Ver y gestionar solo las citas asignadas a ti
-            - 🐕 **Mascotas**: Ver información de las mascotas que atiendes
-            - 🏥 **Consultas**: Registrar diagnósticos y tratamientos de tus citas
-            - 👨‍💼 **Empleados**: Ver información general del equipo
-            
-            👈 **Use el menú lateral** para navegar entre secciones.
-            """)
-            
-        elif user_role == 'enfermero':
-            st.markdown("""
-            **Accesos disponibles:**
-            
-            - 📋 **Citas**: Ver todas las citas de la clínica
-            - 🐕 **Mascotas**: Acceso completo a información de todas las mascotas
-            - 🏥 **Consultas**: Ver todas las consultas médicas
-            - 👨‍💼 **Empleados**: Ver información del equipo
-            
-            👈 **Use el menú lateral** para navegar entre secciones.
-            """)
-            
-        elif user_role == 'recepcionista':
-            st.markdown("""
-            **Acceso Completo - Recepcionista**
-            
-            Como recepcionista, tienes acceso total a:
-            
-            - 📋 **Gestionar Citas**: Ver, crear y modificar todas las citas
-            - 🏥 **Consultas**: Ver todas las consultas médicas
-            - 💰 **Facturas**: Generar y gestionar facturas
-            - 🐕 **Mascotas**: Gestionar información de todas las mascotas
-            - 👥 **Dueños**: Registrar y gestionar información de clientes
-            - 👨‍💼 **Empleados**: Administrar todo el personal
-            
-            👈 **Use el menú lateral** para navegar entre las diferentes secciones.
-            """)
-        
-        st.info("💡 **Consejo**: Las páginas están disponibles en el menú lateral izquierdo según tus permisos.")
+        st.markdown("---")
+        st.info("💡 **Consejo**: Use el menú lateral izquierdo para navegar a otras páginas según sus permisos.")
         
     else:  # Dueño
-        st.markdown("""
-        ### Panel de Cliente
+        nombre = st.session_state.user_data.get('nombre', 'Usuario')
+        st.markdown(f"### 👋 Bienvenido, {nombre}")
+        st.caption("Cliente")
+        st.markdown("---")
         
-        Bienvenido. Desde aquí puede:
+        # Dashboard para dueño
+        try:
+            db = init_db_connection()
+            if db.connect():
+                id_dueno = st.session_state.user_data['id_dueno']
+                
+                st.subheader("📊 Tu Panel")
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    mascotas = db.fetch_all("SELECT COUNT(*) as total FROM mascotas WHERE id_dueno = %s", (id_dueno,))
+                    st.metric("Tus Mascotas", mascotas[0]['total'] if mascotas else 0)
+                
+                with col2:
+                    citas = db.fetch_all("""
+                        SELECT COUNT(*) as total FROM citas c
+                        INNER JOIN mascotas m ON c.id_mascota = m.id_mascota
+                        WHERE m.id_dueno = %s
+                    """, (id_dueno,))
+                    st.metric("Citas Totales", citas[0]['total'] if citas else 0)
+                
+                with col3:
+                    pendientes = db.fetch_all("""
+                        SELECT COUNT(*) as total FROM citas c
+                        INNER JOIN mascotas m ON c.id_mascota = m.id_mascota
+                        WHERE m.id_dueno = %s AND c.estado = 'pendiente'
+                    """, (id_dueno,))
+                    st.metric("Citas Pendientes", pendientes[0]['total'] if pendientes else 0)
+                
+                st.markdown("---")
+                st.subheader("🐾 Tus Mascotas")
+                mis_mascotas = db.fetch_all("SELECT * FROM mascotas WHERE id_dueno = %s", (id_dueno,))
+                
+                if mis_mascotas:
+                    for mascota in mis_mascotas:
+                        st.success(f"🐶 {mascota['nombre']} - {mascota['especie']} ({mascota['raza']})")
+                else:
+                    st.info("No tienes mascotas registradas. Registra una desde Citas.")
+                
+                st.markdown("---")
+                st.subheader("📅 Próximas Citas")
+                proximas = db.fetch_all("""
+                    SELECT c.*, m.nombre as mascota, e.nombre as veterinario FROM citas c
+                    INNER JOIN mascotas m ON c.id_mascota = m.id_mascota
+                    LEFT JOIN empleados e ON c.id_empleado = e.id_empleado
+                    WHERE m.id_dueno = %s AND c.estado = 'pendiente'
+                    ORDER BY c.fecha, c.hora
+                """, (id_dueno,))
+                
+                if proximas:
+                    for cita in proximas:
+                        st.info(f"🗓️ {cita['fecha']} a las {cita['hora']} - {cita.get('mascota', 'N/A')} - Dr. {cita.get('veterinario', 'N/A')}")
+                else:
+                    st.success("✅ No tienes citas pendientes")
+                
+                db.disconnect()
+        except Exception as e:
+            st.error(f"Error al cargar información: {str(e)}")
         
-        - 📅 **Registrar Citas**: Solicitar nuevas citas para sus mascotas
-        - 🐾 **Ver Mascotas**: Consultar y registrar información de sus mascotas
-        - 📜 **Historial**: Ver citas previas de sus mascotas
-        - 👤 **Mi Perfil**: Ver su información personal
+        st.markdown("---")
         
-        👈 **Use el menú lateral** para acceder a las opciones disponibles.
-        """)
-        
-        st.warning("⚠️ **Acceso Limitado**: Como dueño, solo tiene acceso a información relacionada con sus mascotas.")
-        
-        # Botón rápido para citas
+        # Botón rápido para registrar cita
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            if st.button("📅 Ir a Citas", use_container_width=True, type="primary"):
+            if st.button("📅 Registrar Nueva Cita", use_container_width=True, type="primary"):
                 st.switch_page("pages/Citas.py")
 
 # Flujo principal

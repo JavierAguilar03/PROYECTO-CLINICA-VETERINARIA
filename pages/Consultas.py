@@ -119,7 +119,7 @@ with tab2:
                 st.subheader("💰 Información de Factura")
                 col_f1, col_f2 = st.columns(2)
                 with col_f1:
-                    total_factura = st.number_input("Total a Cobrar (€)*", min_value=0.0, step=5.0, value=50.0)
+                    total_factura = st.number_input("Total a Cobrar (€)*", min_value=0.0, max_value=1000000.0, step=5.0, value=50.0)
                 with col_f2:
                     metodo_pago = st.selectbox("Método de Pago*", ["efectivo", "tarjeta", "transferencia", "paypal"])
                 
@@ -175,7 +175,7 @@ with tab2:
                 st.subheader("💰 Información de Factura")
                 col_f1, col_f2 = st.columns(2)
                 with col_f1:
-                    total_factura = st.number_input("Total a Cobrar (€)*", min_value=0.0, step=5.0, value=50.0)
+                    total_factura = st.number_input("Total a Cobrar (€)*", min_value=0.0, max_value=1000000.0, step=5.0, value=50.0)
                 with col_f2:
                     metodo_pago = st.selectbox("Método de Pago*", ["efectivo", "tarjeta", "transferencia", "paypal"])
                 
