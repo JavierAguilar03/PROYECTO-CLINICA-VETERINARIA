@@ -160,12 +160,17 @@ with tab1:
                             col_btn1, col_btn2, col_btn3 = st.columns(3)
                             with col_btn1:
                                 if st.button("✅ Completar", key=f"complete_{cita['id_cita']}"):
-                                    db2 = init_db()
-                                    if db2.connect():
-                                        db2.actualizar_cita(cita['id_cita'], estado="completada")
-                                        db2.disconnect()
-                                        st.success("Cita completada")
-                                        st.rerun()
+                                    # Guardar datos de la cita en session_state para crear consulta
+                                    st.session_state.cita_a_completar = {
+                                        'id_cita': cita['id_cita'],
+                                        'mascota': cita.get('mascota_nombre', 'N/A'),
+                                        'empleado': cita.get('empleado_nombre', 'N/A'),
+                                        'motivo': cita['motivo'],
+                                        'fecha': cita['fecha'],
+                                        'hora': cita['hora']
+                                    }
+                                    # Redirigir a la página de consultas
+                                    st.switch_page("pages/Consultas.py")
                             
                             with col_btn2:
                                 if st.button("❌ Cancelar", key=f"cancel_{cita['id_cita']}"):
