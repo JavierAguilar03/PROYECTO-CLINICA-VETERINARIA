@@ -1,8 +1,11 @@
 
 import unittest
+import logging
 from unittest.mock import patch, MagicMock
 from src.database_conn.db_conn import DatabaseConnection
 
+# Configurar logger para tests
+logger = logging.getLogger('test.db_conn')
 
 class TestDatabaseConnection(unittest.TestCase):
 
@@ -10,6 +13,7 @@ class TestDatabaseConnection(unittest.TestCase):
     
     @patch("mysql.connector.connect")
     def test_connect_successful(self, mock_connect):
+        logger.info("Ejecutando test: test_connect_successful")
         mock_connection = MagicMock()
         mock_connection.is_connected.return_value = True
         mock_connect.return_value = mock_connection
@@ -17,6 +21,7 @@ class TestDatabaseConnection(unittest.TestCase):
         db = DatabaseConnection("localhost", "user", "pass", "clinicadb")
         connected = db.connect()
         self.assertTrue(connected)
+        logger.info("Test test_connect_successful: PASSED")
 
     @patch("mysql.connector.connect")
     def test_connect_failure(self, mock_connect):

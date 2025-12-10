@@ -2,6 +2,7 @@ import streamlit as st
 import sys
 import os
 from datetime import datetime, date
+import logging
 
 # Añadir el directorio raíz al path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -14,24 +15,36 @@ from src.entidades.mascotas.mascota import Mascota
 from src.entidades.personas.duenos.dueno import Dueno
 from src.entidades.personas.empleados.empleado import Empleado
 
+# Configurar logger para este módulo
+logger = logging.getLogger('pages.citas')
+logger.setLevel(logging.INFO)
+
 st.set_page_config(page_title="Citas - Clínica Veterinaria", page_icon="📅", layout="wide")
+
+logger.info("Accediendo a módulo de Citas")
 
 # Verificar autenticación
 if 'authenticated' not in st.session_state or not st.session_state.authenticated:
+    logger.warning("Intento de acceso no autenticado a Citas")
     st.warning("⚠️ Por favor, inicie sesión primero")
     st.stop()
 
 # Control de acceso por rol
 user_role = st.session_state.user_data.get('tipo_empleado', '').lower() if st.session_state.user_type == 'empleado' else 'dueño'
+user_id = st.session_state.user_data.get('id_empleado' if st.session_state.user_type == 'empleado' else 'id_dueno', 'N/A')
+logger.info(f"Usuario autenticado: rol={user_role}, id={user_id}")
 
 # Conserjes NO tienen acceso a citas
 if user_role == 'conserje':
+    logger.warning(f"Intento de acceso no autorizado por conserje (id={user_id})")
     st.error("🚫 Acceso restringido. Los conserjes solo pueden acceder a la sección de Empleados.")
     st.stop()
 
 @st.dialog("🏥 Completar Cita y Registrar Consulta")
 def modal_completar_cita(cita):
     """Modal para completar una cita y registrar consulta con factura."""
+    logger.info(f"Abriendo modal para completar cita ID={cita['id_cita']}")
+    
     st.write(f"**Cita #{cita['id_cita']}**")
     st.write(f"**Mascota:** {cita.get('mascota_nombre', 'N/A')}")
     st.write(f"**Motivo:** {cita['motivo']}")
@@ -55,24 +68,35 @@ def modal_completar_cita(cita):
         submitted = st.form_submit_button("✅ Completar Cita y Generar Factura", use_container_width=True)
         
         if submitted:
+            logger.info(f"Procesando completar cita ID={cita['id_cita']}, total={total_factura}, metodo_pago={metodo_pago}")
+            
             if diagnostico and tratamiento and total_factura > 0:
                 try:
                     db = init_db()
                     if db.connect():
+                        logger.info(f"Conexión DB exitosa para completar cita ID={cita['id_cita']}")
+                        
                         # 1. Actualizar estado de la cita a completada usando entidad Cita
+                        logger.debug(f"Actualizando estado cita ID={cita['id_cita']} a 'completada'")
                         Cita.actualizar_estado(db, cita['id_cita'], "completada")
+                        logger.info(f"Cita ID={cita['id_cita']} marcada como completada")
                         
                         # 2. Registrar la consulta usando entidad Consulta
+                        logger.debug(f"Creando consulta para cita ID={cita['id_cita']}")
                         id_consulta = Consulta.crear(db, cita['id_cita'], diagnostico, tratamiento, observaciones)
                         
                         if id_consulta:
+                            logger.info(f"Consulta ID={id_consulta} creada exitosamente para cita ID={cita['id_cita']}")
+                            
                             # 3. Generar factura automáticamente usando entidad Factura
                             fecha_hoy = date.today().strftime("%Y-%m-%d")
+                            logger.debug(f"Generando factura para consulta ID={id_consulta}, total={total_factura}")
                             id_factura = Factura.crear(db, id_consulta, total_factura, metodo_pago, fecha_hoy)
                             
                             db.disconnect()
                             
                             if id_factura:
+                                logger.info(f"Factura ID={id_factura} generada exitosamente. Proceso completado.")
                                 st.success(f"""✅ **CITA COMPLETADA EXITOSAMENTE**
                                 
                                 - **Consulta ID:** {id_consulta}
@@ -84,13 +108,20 @@ def modal_completar_cita(cita):
                                 st.session_state.cita_completada = True
                                 st.rerun()
                             else:
+                                logger.error(f"Error al generar factura para consulta ID={id_consulta}")
                                 st.error("⚠️ Consulta registrada pero error al generar factura")
                         else:
+                            logger.error(f"Error al registrar consulta para cita ID={cita['id_cita']}")
                             st.error("Error al registrar la consulta")
                             db.disconnect()
+                    else:
+                        logger.error("Error al conectar a la base de datos para completar cita")
+                        st.error("Error de conexión a la base de datos")
                 except Exception as e:
+                    logger.exception(f"Excepción al completar cita ID={cita['id_cita']}: {str(e)}")
                     st.error(f"Error: {str(e)}")
             else:
+                logger.warning(f"Intento de completar cita ID={cita['id_cita']} con campos obligatorios vacíos")
                 st.warning("⚠️ Complete los campos obligatorios y asegúrese de que el total sea mayor a 0")
 
 st.title("📅 Gestión de Citas")
@@ -212,6 +243,7 @@ with tab1:
             db.disconnect()
             
             if citas:
+                logger.info(f"Se encontraron {len(citas)} citas para el filtro: {filter_estado}, rol: {user_role}")
                 st.info(f"📊 Total de citas: {len(citas)}")
                 
                 for cita in citas:
@@ -237,16 +269,22 @@ with tab1:
                             
                             with col_btn2:
                                 if st.button("❌ Cancelar", key=f"cancel_{cita['id_cita']}"):
+                                    logger.info(f"Cancelando cita ID={cita['id_cita']}")
                                     db2 = init_db()
                                     if db2.connect():
                                         Cita.actualizar_estado(db2, cita['id_cita'], "cancelada")
                                         db2.disconnect()
+                                        logger.info(f"Cita ID={cita['id_cita']} cancelada exitosamente")
                                         st.success("Cita cancelada")
                                         st.rerun()
+                                    else:
+                                        logger.error(f"Error de conexión al intentar cancelar cita ID={cita['id_cita']}")
             else:
+                logger.info(f"No se encontraron citas para el filtro: {filter_estado}, rol: {user_role}")
                 st.warning("No hay citas registradas")
     
     except Exception as e:
+        logger.exception(f"Error al cargar citas: {str(e)}")
         st.error(f"Error al cargar citas: {str(e)}")
 
 # TAB 2: Nueva Cita
@@ -511,18 +549,24 @@ with tab2:
                 submit_cita = st.form_submit_button("✅ REGISTRAR CITA COMPLETA", use_container_width=True, type="primary")
                 
                 if submit_cita:
+                    logger.info(f"Procesando registro de nueva cita: mascota_id={id_mascota_seleccionada}, empleado_id={id_empleado_cita}")
+                    
                     if motivo_cita and id_empleado_cita:
                         try:
                             db = init_db()
                             if db.connect():
+                                logger.info("Conexión DB exitosa para crear cita")
                                 fecha_str = fecha_cita.strftime("%Y-%m-%d")
                                 hora_str = hora_cita.strftime("%H:%M")
                                 
+                                logger.debug(f"Creando cita: fecha={fecha_str}, hora={hora_str}, motivo={motivo_cita}, estado={estado_cita}")
                                 id_cita = Cita.crear(db, fecha_str, hora_str, motivo_cita, 
                                                     id_mascota_seleccionada, id_empleado_cita, estado_cita)
                                 db.disconnect()
                                 
                                 if id_cita:
+                                    logger.info(f"Cita ID={id_cita} registrada exitosamente")
+                                    
                                     # Limpiar session_state
                                     if 'dueno_encontrado' in st.session_state:
                                         del st.session_state.dueno_encontrado
@@ -543,10 +587,17 @@ with tab2:
                                     
                                     st.rerun()
                                 else:
+                                    logger.error("Error al crear cita: no se obtuvo ID")
                                     st.error("Error al registrar la cita")
+                            else:
+                                logger.error("Error al conectar a la base de datos para crear cita")
+                                st.error("Error de conexión a la base de datos")
                         except Exception as e:
+                            logger.exception(f"Excepción al registrar cita: {str(e)}")
                             st.error(f"Error: {str(e)}")
                     else:
+                        logger.warning("Intento de registrar cita con campos obligatorios vacíos")
+
                         st.warning("⚠️ Complete todos los campos obligatorios")
     else:
         st.info("👆 Primero seleccione o registre un dueño en el Paso 1")

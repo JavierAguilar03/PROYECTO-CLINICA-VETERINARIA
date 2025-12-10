@@ -1,6 +1,9 @@
 from datetime import datetime
 from typing import Optional, List, Dict, Any
+import logging
 
+# Configurar logger
+logger = logging.getLogger('entidades.cita')
 
 class Cita:
     """
@@ -47,7 +50,17 @@ class Cita:
     def crear(db, fecha: str, hora: str, motivo: str, id_mascota: int,
               id_empleado: int, estado: str = "pendiente") -> Optional[int]:
         """Crea una nueva cita en la base de datos y retorna su ID."""
-        return db.insertar_cita(fecha, hora, motivo, id_mascota, id_empleado, estado)
+        logger.info(f"Creando cita: mascota={id_mascota}, empleado={id_empleado}, fecha={fecha}, estado={estado}")
+        try:
+            id_cita = db.insertar_cita(fecha, hora, motivo, id_mascota, id_empleado, estado)
+            if id_cita:
+                logger.info(f"Cita creada exitosamente con ID: {id_cita}")
+            else:
+                logger.error("Error al crear cita: no se obtuvo ID")
+            return id_cita
+        except Exception as e:
+            logger.exception(f"Excepción al crear cita: {str(e)}")
+            raise
 
     @staticmethod
     def obtener_por_id(db, id_cita: int) -> Optional[Dict[str, Any]]:
@@ -73,8 +86,19 @@ class Cita:
     def actualizar_estado(db, id_cita: int, estado: str) -> bool:
         """Actualiza el estado de una cita."""
         if estado not in Cita.ESTADOS_VALIDOS:
+            logger.warning(f"Intento de actualizar cita {id_cita} con estado inválido: {estado}")
             raise ValueError(f"Estado '{estado}' inválido. Debe ser uno de {Cita.ESTADOS_VALIDOS}.")
-        return db.actualizar_cita(id_cita, estado=estado)
+        logger.info(f"Actualizando estado de cita {id_cita} a '{estado}'")
+        try:
+            resultado = db.actualizar_cita(id_cita, estado=estado)
+            if resultado:
+                logger.info(f"Cita {id_cita} actualizada exitosamente")
+            else:
+                logger.error(f"Error al actualizar cita {id_cita}")
+            return resultado
+        except Exception as e:
+            logger.exception(f"Excepción al actualizar cita {id_cita}: {str(e)}")
+            raise
 
     @staticmethod
     def eliminar(db, id_cita: int) -> bool:

@@ -1,13 +1,17 @@
 import pytest
+import logging
 from unittest.mock import MagicMock
 from src.entidades.administrativo.factura import Factura
 
+# Configurar logger para tests
+logger = logging.getLogger('test.factura')
 
 class TestFactura:
     """Tests para la clase Factura y sus métodos de backend."""
 
     def test_crear_factura(self):
         """Test crear una nueva factura."""
+        logger.info("Ejecutando test: test_crear_factura")
         db_mock = MagicMock()
         db_mock.insertar_factura.return_value = 1
         
@@ -23,6 +27,7 @@ class TestFactura:
         db_mock.insertar_factura.assert_called_once_with(
             1, 150.50, "tarjeta", "2025-12-10"
         )
+        logger.info("Test test_crear_factura: PASSED")
 
     def test_crear_factura_metodo_invalido(self):
         """Test crear factura con método de pago inválido."""

@@ -1,13 +1,17 @@
 import pytest
+import logging
 from unittest.mock import MagicMock
 from src.entidades.mascotas.mascota import Mascota
 
+# Configurar logger para tests
+logger = logging.getLogger('test.mascota')
 
 class TestMascota:
     """Tests para la clase Mascota y sus métodos de backend."""
 
     def test_crear_mascota(self):
         """Test crear una nueva mascota."""
+        logger.info("Ejecutando test: test_crear_mascota")
         db_mock = MagicMock()
         db_mock.insertar_mascota.return_value = 1
         
@@ -26,6 +30,7 @@ class TestMascota:
         db_mock.insertar_mascota.assert_called_once_with(
             "Max", "Perro", "Labrador", "2020-05-15", 25.5, "Macho", 1
         )
+        logger.info("Test test_crear_mascota: PASSED")
 
     def test_obtener_por_id(self):
         """Test obtener mascota por ID."""

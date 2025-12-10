@@ -5,23 +5,37 @@ from datetime import datetime, timedelta, date
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import logging
 
 # Añadir el directorio raíz al path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from src.utils.db_utils import init_db
 
+# Configurar logger para este módulo
+logger = logging.getLogger('pages.dashboard')
+logger.setLevel(logging.INFO)
+
 st.set_page_config(page_title="Dashboard - Clínica Veterinaria", page_icon="📊", layout="wide")
+
+logger.info("Accediendo a Dashboard")
 
 # Verificar autenticación
 if 'authenticated' not in st.session_state or not st.session_state.authenticated:
+    logger.warning("Intento de acceso no autenticado a Dashboard")
     st.warning("⚠️ Por favor, inicie sesión primero")
     st.stop()
 
 # Solo empleados pueden acceder al dashboard
 if st.session_state.user_type != 'empleado':
+    user_type = st.session_state.user_type
+    logger.warning(f"Intento de acceso no autorizado al Dashboard por usuario tipo: {user_type}")
     st.error("🚫 Acceso restringido. El dashboard es solo para empleados.")
     st.stop()
+
+user_id = st.session_state.user_data.get('id_empleado', 'N/A')
+user_role = st.session_state.user_data.get('tipo_empleado', 'N/A')
+logger.info(f"Acceso autorizado a Dashboard: empleado_id={user_id}, rol={user_role}")
 
 # Título principal
 st.title("📊 Dashboard - Clínica Veterinaria")
@@ -32,8 +46,10 @@ st.markdown("---")
 
 # Obtener datos de la base de datos
 try:
+    logger.info("Obteniendo datos para Dashboard")
     db = init_db()
     if db.connect():
+        logger.info("Conexión DB exitosa para Dashboard")
         
         # ===========================
         # MÉTRICAS PRINCIPALES (KPIs)
@@ -45,18 +61,22 @@ try:
         # Total de Citas
         query_total_citas = "SELECT COUNT(*) as total FROM citas"
         total_citas = db.fetch_one(query_total_citas)['total']
+        logger.debug(f"Total de citas: {total_citas}")
         
         # Citas pendientes
         query_citas_pendientes = "SELECT COUNT(*) as total FROM citas WHERE estado = 'pendiente'"
         citas_pendientes = db.fetch_one(query_citas_pendientes)['total']
+        logger.debug(f"Citas pendientes: {citas_pendientes}")
         
         # Total de Mascotas
         query_total_mascotas = "SELECT COUNT(*) as total FROM mascotas"
         total_mascotas = db.fetch_one(query_total_mascotas)['total']
+        logger.debug(f"Total mascotas: {total_mascotas}")
         
         # Total de Clientes (Dueños)
         query_total_duenos = "SELECT COUNT(*) as total FROM duenos"
         total_duenos = db.fetch_one(query_total_duenos)['total']
+        logger.debug(f"Total dueños: {total_duenos}")
         
         with col1:
             st.metric(label="📅 Citas Totales", value=total_citas)

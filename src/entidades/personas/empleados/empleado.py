@@ -1,6 +1,9 @@
 from src.entidades.personas.persona import Persona
 from typing import Optional, List, Dict, Any
+import logging
 
+# Configurar logger
+logger = logging.getLogger('entidades.empleado')
 
 class Empleado(Persona):
     """
@@ -33,8 +36,18 @@ class Empleado(Persona):
               fecha_nacimiento: str, salario: float, tipo_empleado: str,
               usuario: str = None, contraseña: str = None) -> Optional[int]:
         """Crea un nuevo empleado en la base de datos y retorna su ID."""
-        return db.insertar_empleado(nombre, dni, telefono, email, fecha_nacimiento,
-                                    salario, tipo_empleado, usuario, contraseña)
+        logger.info(f"Creando empleado '{nombre}' (tipo: {tipo_empleado})")
+        try:
+            id_empleado = db.insertar_empleado(nombre, dni, telefono, email, fecha_nacimiento,
+                                        salario, tipo_empleado, usuario, contraseña)
+            if id_empleado:
+                logger.info(f"Empleado creado exitosamente con ID: {id_empleado}")
+            else:
+                logger.error("Error al crear empleado: no se obtuvo ID")
+            return id_empleado
+        except Exception as e:
+            logger.exception(f"Excepción al crear empleado: {str(e)}")
+            raise
 
     @staticmethod
     def obtener_por_id(db, id_empleado: int) -> Optional[Dict[str, Any]]:
@@ -58,4 +71,14 @@ class Empleado(Persona):
     @staticmethod
     def eliminar(db, id_empleado: int) -> bool:
         """Elimina un empleado de la base de datos."""
-        return db.eliminar_empleado(id_empleado)
+        logger.info(f"Eliminando empleado {id_empleado}")
+        try:
+            resultado = db.eliminar_empleado(id_empleado)
+            if resultado:
+                logger.info(f"Empleado {id_empleado} eliminado exitosamente")
+            else:
+                logger.error(f"Error al eliminar empleado {id_empleado}")
+            return resultado
+        except Exception as e:
+            logger.exception(f"Excepción al eliminar empleado {id_empleado}: {str(e)}")
+            raise

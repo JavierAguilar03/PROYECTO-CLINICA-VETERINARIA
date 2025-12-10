@@ -2,37 +2,51 @@ import streamlit as st
 import sys
 import os
 from datetime import date
+import logging
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.utils.db_utils import init_db
 from src.entidades.personas.empleados.empleado import Empleado
 
+# Configurar logger
+logger = logging.getLogger('pages.empleados')
+logger.setLevel(logging.INFO)
+
 st.set_page_config(page_title="Empleados", page_icon="👨‍⚕️", layout="wide")
 
+logger.info("Accediendo a módulo de Empleados")
+
 if 'authenticated' not in st.session_state or not st.session_state.authenticated:
+    logger.warning("Intento de acceso no autenticado a Empleados")
     st.warning("⚠️ Por favor, inicie sesión primero")
     st.stop()
 
 if st.session_state.user_type != "empleado":
+    logger.warning(f"Intento de acceso a Empleados por usuario tipo: {st.session_state.user_type}")
     st.error("🚫 Acceso restringido. Solo empleados.")
     st.stop()
 
 # Control de acceso por rol
 user_role = st.session_state.user_data.get('tipo_empleado', '').lower()
+user_id = st.session_state.user_data.get('id_empleado', 'N/A')
+logger.info(f"Usuario autenticado en Empleados: rol={user_role}, id={user_id}")
 
 # Determinar nivel de acceso
 if user_role == 'conserje':
     # Conserjes solo ven su propia información
     is_limited_view = True
     can_register = False
+    logger.info(f"Conserje id={user_id} con vista limitada")
 elif user_role == 'recepcionista':
     # Recepcionistas tienen acceso completo
     is_limited_view = False
     can_register = True
+    logger.info(f"Recepcionista id={user_id} con acceso completo")
 else:
     # Veterinarios y enfermeros ven todos pero no pueden registrar
     is_limited_view = False
     can_register = False
+    logger.info(f"Empleado rol={user_role} con vista de solo lectura")
 
 st.title("👨‍⚕️ Gestión de Empleados")
 st.markdown("---")

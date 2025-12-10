@@ -1,13 +1,17 @@
 import pytest
+import logging
 from unittest.mock import MagicMock
 from src.entidades.administrativo.consulta import Consulta
 
+# Configurar logger para tests
+logger = logging.getLogger('test.consulta')
 
 class TestConsulta:
     """Tests para la clase Consulta y sus métodos de backend."""
 
     def test_crear_consulta(self):
         """Test crear una nueva consulta."""
+        logger.info("Ejecutando test: test_crear_consulta")
         db_mock = MagicMock()
         db_mock.insertar_consulta.return_value = 1
         
@@ -23,6 +27,7 @@ class TestConsulta:
         db_mock.insertar_consulta.assert_called_once_with(
             1, "Infección leve", "Antibióticos", "Control en 7 días"
         )
+        logger.info("Test test_crear_consulta: PASSED")
 
     def test_crear_consulta_sin_observaciones(self):
         """Test crear consulta sin observaciones opcionales."""

@@ -1,9 +1,12 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional, List, Dict, Any
+import logging
 
 if TYPE_CHECKING:
     from src.entidades.personas.duenos.dueno import Dueno
 
+# Configurar logger
+logger = logging.getLogger('entidades.mascota')
 
 class Mascota:
     """
@@ -30,7 +33,17 @@ class Mascota:
     def crear(db, nombre: str, especie: str, raza: str, fecha_nacimiento: str,
               peso: float, sexo: str, id_dueno: int) -> Optional[int]:
         """Crea una nueva mascota en la base de datos y retorna su ID."""
-        return db.insertar_mascota(nombre, especie, raza, fecha_nacimiento, peso, sexo, id_dueno)
+        logger.info(f"Creando mascota '{nombre}' ({especie}) para dueño {id_dueno}")
+        try:
+            id_mascota = db.insertar_mascota(nombre, especie, raza, fecha_nacimiento, peso, sexo, id_dueno)
+            if id_mascota:
+                logger.info(f"Mascota creada exitosamente con ID: {id_mascota}")
+            else:
+                logger.error("Error al crear mascota: no se obtuvo ID")
+            return id_mascota
+        except Exception as e:
+            logger.exception(f"Excepción al crear mascota: {str(e)}")
+            raise
 
     @staticmethod
     def obtener_por_id(db, id_mascota: int) -> Optional[Dict[str, Any]]:
@@ -55,4 +68,14 @@ class Mascota:
     @staticmethod
     def eliminar(db, id_mascota: int) -> bool:
         """Elimina una mascota de la base de datos."""
-        return db.eliminar_mascota(id_mascota)
+        logger.info(f"Eliminando mascota {id_mascota}")
+        try:
+            resultado = db.eliminar_mascota(id_mascota)
+            if resultado:
+                logger.info(f"Mascota {id_mascota} eliminada exitosamente")
+            else:
+                logger.error(f"Error al eliminar mascota {id_mascota}")
+            return resultado
+        except Exception as e:
+            logger.exception(f"Excepción al eliminar mascota {id_mascota}: {str(e)}")
+            raise

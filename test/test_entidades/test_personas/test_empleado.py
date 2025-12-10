@@ -1,13 +1,17 @@
 import pytest
+import logging
 from unittest.mock import MagicMock
 from src.entidades.personas.empleados.empleado import Empleado
 
+# Configurar logger para tests
+logger = logging.getLogger('test.empleado')
 
 class TestEmpleado:
     """Tests para la clase Empleado y sus métodos de backend."""
 
     def test_crear_empleado(self):
         """Test crear un nuevo empleado."""
+        logger.info("Ejecutando test: test_crear_empleado")
         db_mock = MagicMock()
         db_mock.insertar_empleado.return_value = 1
         
@@ -27,6 +31,7 @@ class TestEmpleado:
             "Dr. Carlos Ruiz", "11223344C", "600111222", "carlos@veterinaria.com",
             "1980-04-10", 2500.0, "Veterinario", None, None
         )
+        logger.info("Test test_crear_empleado: PASSED")
 
     def test_crear_empleado_con_credenciales(self):
         """Test crear empleado con usuario y contraseña."""

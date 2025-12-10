@@ -1,13 +1,17 @@
 import pytest
+import logging
 from unittest.mock import MagicMock
 from src.entidades.personas.duenos.dueno import Dueno
 
+# Configurar logger para tests
+logger = logging.getLogger('test.dueno')
 
 class TestDueno:
     """Tests para la clase Dueno y sus métodos de backend."""
 
     def test_crear_dueno(self):
         """Test crear un nuevo dueño."""
+        logger.info("Ejecutando test: test_crear_dueno")
         db_mock = MagicMock()
         db_mock.insertar_dueno.return_value = 1
         
@@ -26,6 +30,7 @@ class TestDueno:
             "Juan Pérez", "12345678A", "600123456", "juan@email.com",
             "1985-03-20", "Calle Mayor 1"
         )
+        logger.info("Test test_crear_dueno: PASSED")
 
     def test_obtener_por_id(self):
         """Test obtener dueño por ID."""

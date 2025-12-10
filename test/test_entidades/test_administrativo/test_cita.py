@@ -1,13 +1,17 @@
 import pytest
+import logging
 from unittest.mock import MagicMock, patch
 from src.entidades.administrativo.cita import Cita
 
+# Configurar logger para tests
+logger = logging.getLogger('test.cita')
 
 class TestCita:
     """Tests para la clase Cita y sus métodos de backend."""
 
     def test_crear_cita(self):
         """Test crear una nueva cita."""
+        logger.info("Ejecutando test: test_crear_cita")
         db_mock = MagicMock()
         db_mock.insertar_cita.return_value = 1
         
@@ -25,6 +29,7 @@ class TestCita:
         db_mock.insertar_cita.assert_called_once_with(
             "2025-12-15", "10:30", "Vacunación", 1, 1, "pendiente"
         )
+        logger.info("Test test_crear_cita: PASSED")
 
     def test_crear_cita_estado_invalido(self):
         """Test crear cita con estado inválido no lanza excepción (validación en DB)."""

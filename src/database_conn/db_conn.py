@@ -82,31 +82,53 @@ class DatabaseConnection:
 
     def fetch_one(self, query: str, params: Optional[tuple] = None) -> Optional[Any]:
         if not self.connection or not self.connection.is_connected():
+            logger.error("Intento de fetch_one sin conexión activa")
             raise ConnectionError("Database not connected")
         cursor = self.connection.cursor(dictionary=True)
-        cursor.execute(query, params)
-        result = cursor.fetchone()
-        cursor.close()
-        return result
+        try:
+            logger.debug(f"Ejecutando fetch_one: {query} con params: {params}")
+            cursor.execute(query, params)
+            result = cursor.fetchone()
+            logger.debug(f"fetch_one retornó: {'1 resultado' if result else 'ningún resultado'}")
+            return result
+        except Error as e:
+            logger.error(f"Error en fetch_one: {str(e)}")
+            raise
+        finally:
+            cursor.close()
 
     def fetch_all(self, query: str, params: Optional[tuple] = None) -> list:
         """Fetch all results from a query."""
         if not self.connection or not self.connection.is_connected():
+            logger.error("Intento de fetch_all sin conexión activa")
             raise ConnectionError("Database not connected")
         cursor = self.connection.cursor(dictionary=True)
-        cursor.execute(query, params)
-        results = cursor.fetchall()
-        cursor.close()
-        return results
+        try:
+            logger.debug(f"Ejecutando fetch_all: {query} con params: {params}")
+            cursor.execute(query, params)
+            results = cursor.fetchall()
+            logger.debug(f"fetch_all retornó {len(results)} resultados")
+            return results
+        except Error as e:
+            logger.error(f"Error en fetch_all: {str(e)}")
+            raise
+        finally:
+            cursor.close()
 
     def validate_user(self, username: str, password: str) -> bool:
         if not self.connection or not self.connection.is_connected():
+            logger.error("Intento de validar usuario sin conexión activa")
             raise ConnectionError("Database not connected")
+        logger.info(f"Validando usuario: {username}")
         query = """
             SELECT * FROM empleados
             WHERE usuario = %s AND contraseña = %s
         """
         result = self.fetch_one(query, (username, password))
+        if result:
+            logger.info(f"Usuario {username} validado exitosamente")
+        else:
+            logger.warning(f"Intento de login fallido para usuario: {username}")
         return result is not None
 
     # ------------------------------

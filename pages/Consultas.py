@@ -2,6 +2,7 @@ import streamlit as st
 import sys
 import os
 from datetime import date
+import logging
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.utils.db_utils import init_db
@@ -9,21 +10,32 @@ from src.entidades.administrativo.consulta import Consulta
 from src.entidades.administrativo.cita import Cita
 from src.entidades.administrativo.factura import Factura
 
+# Configurar logger
+logger = logging.getLogger('pages.consultas')
+logger.setLevel(logging.INFO)
+
 st.set_page_config(page_title="Consultas", page_icon="🏥", layout="wide")
 
+logger.info("Accediendo a módulo de Consultas")
+
 if 'authenticated' not in st.session_state or not st.session_state.authenticated:
+    logger.warning("Intento de acceso no autenticado a Consultas")
     st.warning("⚠️ Por favor, inicie sesión primero")
     st.stop()
 
 # Control de acceso por rol
 if st.session_state.user_type != "empleado":
+    logger.warning(f"Intento de acceso a Consultas por usuario tipo: {st.session_state.user_type}")
     st.error("🚫 Acceso restringido. Solo empleados.")
     st.stop()
 
 user_role = st.session_state.user_data.get('tipo_empleado', '').lower()
+user_id = st.session_state.user_data.get('id_empleado', 'N/A')
+logger.info(f"Usuario autenticado en Consultas: rol={user_role}, id={user_id}")
 
 # Solo veterinarios, enfermeros y recepcionistas tienen acceso a consultas
 if user_role not in ['veterinario', 'enfermero', 'recepcionista']:
+    logger.warning(f"Intento de acceso no autorizado a Consultas por rol={user_role}")
     st.error("🚫 Acceso restringido. Los conserjes solo pueden acceder a la sección de Empleados.")
     st.stop()
 
