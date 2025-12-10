@@ -42,8 +42,11 @@ class Empleado(Persona):
         return db.obtener_empleado(id_empleado)
 
     @staticmethod
-    def obtener_todos(db) -> List[Dict[str, Any]]:
-        """Obtiene todos los empleados."""
+    def obtener_todos(db, tipo: str = None) -> List[Dict[str, Any]]:
+        """Obtiene todos los empleados, opcionalmente filtrados por tipo."""
+        if tipo:
+            query = "SELECT * FROM empleados WHERE tipo_empleado = %s"
+            return db.fetch_all(query, (tipo,))
         return db.obtener_todos_empleados()
 
     @staticmethod
