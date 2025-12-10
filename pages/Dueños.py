@@ -50,8 +50,14 @@ else:
 st.title("👥 Gestión de Dueños")
 st.markdown("---")
 
-# Tabs
-tab1, tab3 = st.tabs(["📋 Ver Dueños", "🔍 Buscar"])
+# Solo mostrar tab de ver para dueños, tabs completos para recepcionistas
+if is_owner_view:
+    # Dueños solo ven su información, sin opción de editar
+    tab1 = st.tabs(["📋 Ver Mi Información"])[0]
+    tab3 = None  # No hay tab de búsqueda para dueños
+else:
+    # Recepcionistas tienen todas las funcionalidades
+    tab1, tab3 = st.tabs(["📋 Ver Dueños", "🔍 Buscar"])
 
 # TAB 1: Ver Dueños
 with tab1:
@@ -100,11 +106,9 @@ with tab1:
         st.markdown("---")
         st.info("ℹ️ **Nota**: Para registrar nuevos dueños, utilice la página de **Citas** → **Nueva Cita**. El sistema le guiará para registrar dueños durante el proceso de creación de citas.")
 
-# TAB 2: Buscar
-with tab3:
-    if is_owner_view:
-        st.info("ℹ️ Puede ver su información en la pestaña 'Ver Dueños'.")
-    else:
+# TAB 2: Buscar (solo para recepcionistas)
+if tab3 is not None:
+    with tab3:
         st.subheader("Buscar Dueño")
         
         id_buscar = st.number_input("ID del dueño", min_value=1, step=1)

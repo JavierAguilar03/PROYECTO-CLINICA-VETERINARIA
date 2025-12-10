@@ -609,11 +609,11 @@ def test_crear_cita(self):
 |---------------|-------|-------------|-----------|---------------|----------|
 | **Dashboard** | ❌ | ✅ | ✅ | ✅ | ❌ |
 | **Ver Dueños** | 🔒 Propio | ❌ | ❌ | ✅ | ❌ |
-| **Crear Dueño** | ❌ | ❌ | ❌ | ✅ | ❌ |
+| **Registrar Dueño** | ❌ | ❌ | ❌ | ✅ | ❌ |
 | **Ver Mascotas** | 🔒 Propias | ✅ | ✅ | ✅ | ❌ |
 | **Crear Mascota** | ❌ | ❌ | ❌ | ✅ | ❌ |
 | **Ver Citas** | 🔒 Propias | ✅ | ✅ | ✅ | ❌ |
-| **Crear Cita** | ❌ | ✅ | ❌ | ✅ | ❌ |
+| **Crear Cita** | 🔒 Solo propias | ✅ | ❌ | ✅ | ❌ |
 | **Ver Consultas** | ❌ | ✅ | ✅ | ✅ | ❌ |
 | **Crear Consulta** | ❌ | ✅ | ✅ | ❌ | ❌ |
 | **Ver Facturas** | ❌ | ❌ | ❌ | ✅ | ❌ |
@@ -632,7 +632,9 @@ def test_crear_cita(self):
 - Propietario de mascotas
 - Acceso limitado a su información personal
 - Puede ver sus mascotas y citas programadas
-- **No puede crear ni modificar** información
+- **Puede crear citas** solo para sus propias mascotas
+- **No puede registrar nuevos dueños** (seguridad)
+- **No puede crear ni modificar** otros registros
 
 #### 🩺 Veterinario
 - Profesional médico de la clínica

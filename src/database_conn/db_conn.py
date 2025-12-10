@@ -244,13 +244,31 @@ class DatabaseConnection:
         return self.execute_insert(query, (fecha, hora, motivo, id_mascota, id_empleado, estado))
 
     def obtener_cita(self, id_cita: int) -> Optional[Any]:
-        """Obtiene una cita por su ID."""
-        query = "SELECT * FROM citas WHERE id_cita = %s"
+        """Obtiene una cita por su ID con nombres de mascota, dueño y veterinario."""
+        query = """
+            SELECT c.*, 
+                   m.nombre as mascota_nombre, m.especie, 
+                   d.nombre as dueno_nombre,
+                   e.nombre as veterinario_nombre
+            FROM citas c
+            LEFT JOIN mascotas m ON c.id_mascota = m.id_mascota
+            LEFT JOIN duenos d ON m.id_dueno = d.id_dueno
+            LEFT JOIN empleados e ON c.id_empleado = e.id_empleado
+            WHERE c.id_cita = %s
+        """
         return self.fetch_one(query, (id_cita,))
 
     def obtener_citas_por_mascota(self, id_mascota: int) -> list:
-        """Obtiene todas las citas de una mascota."""
-        query = "SELECT * FROM citas WHERE id_mascota = %s"
+        """Obtiene todas las citas de una mascota con nombres de mascota y veterinario."""
+        query = """
+            SELECT c.*, 
+                   m.nombre as mascota_nombre,
+                   e.nombre as veterinario_nombre
+            FROM citas c
+            LEFT JOIN mascotas m ON c.id_mascota = m.id_mascota
+            LEFT JOIN empleados e ON c.id_empleado = e.id_empleado
+            WHERE c.id_mascota = %s
+        """
         return self.fetch_all(query, (id_mascota,))
 
     def obtener_citas_por_estado(self, estado: str) -> list:

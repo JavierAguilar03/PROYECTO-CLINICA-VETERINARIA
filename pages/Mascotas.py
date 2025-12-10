@@ -70,6 +70,7 @@ with tab1:
             db.disconnect()
             
             if mascotas:
+                st.info(f"📊 Total de mascotas: {len(mascotas)}")
                 for mascota in mascotas:
                     with st.expander(f"🐶 {mascota['nombre']} - {mascota['especie']}"):
                         col1, col2 = st.columns(2)
@@ -80,7 +81,22 @@ with tab1:
                         with col2:
                             st.write(f"**Peso**: {mascota['peso']} kg")
                             st.write(f"**Sexo**: {mascota['sexo']}")
-                            st.write(f"**Dueño**: {mascota.get('dueno_nombre', 'N/A')}")
+                            # Obtener nombre del dueño si no está en el resultado
+                            if 'dueno_nombre' in mascota and mascota['dueno_nombre']:
+                                st.write(f"**Dueño**: {mascota['dueno_nombre']}")
+                            elif 'id_dueno' in mascota:
+                                # Consultar nombre del dueño
+                                from src.entidades.personas.duenos.dueno import Dueno
+                                db_temp = init_db()
+                                if db_temp.connect():
+                                    dueno_info = Dueno.obtener_por_id(db_temp, mascota['id_dueno'])
+                                    db_temp.disconnect()
+                                    if dueno_info:
+                                        st.write(f"**Dueño**: {dueno_info['nombre']}")
+                                    else:
+                                        st.write(f"**Dueño**: N/A")
+                            else:
+                                st.write(f"**Dueño**: N/A")
             else:
                 st.warning("No hay mascotas registradas")
     except Exception as e:

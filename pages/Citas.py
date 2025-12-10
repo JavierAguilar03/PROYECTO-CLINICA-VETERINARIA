@@ -294,12 +294,17 @@ with tab2:
     # Paso 1: Identificar o registrar dueño
     st.markdown("### 📝 Paso 1: Dueño")
     
-    tipo_dueno = st.radio(
-        "Seleccione una opción:",
-        ["Dueño Existente", "Nuevo Dueño"],
-        horizontal=True,
-        key="tipo_dueno"
-    )
+    # Los dueños solo pueden seleccionar dueños existentes (ellos mismos)
+    # Los empleados pueden seleccionar existentes o registrar nuevos
+    if user_role == 'dueño':
+        tipo_dueno = "Dueño Existente"
+    else:
+        tipo_dueno = st.radio(
+            "Seleccione una opción:",
+            ["Dueño Existente", "Nuevo Dueño"],
+            horizontal=True,
+            key="tipo_dueno"
+        )
     
     id_dueno_seleccionado = None
     dueno_nombre_display = ""
